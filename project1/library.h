@@ -9,3 +9,5 @@
 typedef unsigned short color_t;
 
 void init_graphics();
+
+color_t encode_color(int r, int g, int b);

@@ -2,6 +2,7 @@
 // Alessio Mazzone
 
 #include <stdio.h>
+#include "library.h"
 #include <fcntl.h> // contains open() syscall
 #include <sys/mman.h> // contains mmap() syscall
 
@@ -28,4 +29,11 @@ void init_graphics()
    printf("\nHelloooo\n");
 
 
+}
+
+color_t encode_color(int r, int g, int b)
+{
+    color_t rgb = 0;
+
+    return rgb;
 }
