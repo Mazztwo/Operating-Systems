@@ -2,16 +2,21 @@
 // Alessio Mazzone
 
 #include <stdio.h>
+#include <fcntl.h> // contains open() syscall
 
+// Initialize graphics library
 void init_graphics()
 {
+    // Use open() syscall to access frame buffer for read/write
+    int framebuffer = open("/dev/fb0", O_RDWR);
 
-}
+    if(framebuffer < 0)
+    {
+        printf("\nError opening framebuffer.\n");
+        return;
+    }
+    
+   printf("\nHelloooo\n");
 
-int main()
-{
-    printf("Hello, World!\n");
-    printf("Here is a test-change!\n");
 
-    return 0;
 }
