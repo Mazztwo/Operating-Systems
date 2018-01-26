@@ -50,14 +50,13 @@ color_t encode_color(int r, int g, int b)
     char blue = b & 0x1F;
     
     // Set upper 5 bits
-    unsigned short mask = 0xFFFF;
-    rgb = (red << 11) & mask;
+    rgb = rgb | (red<<11);
 
     // Set middle 6 bits
-    rgb = (green << 5) & mask;
+    rgb = rgb | (green << 5);
 
     // Set last 5 bits
-    rgb = rgb & blue;
+    rgb = rgb | blue;
 
     return rgb;
 }

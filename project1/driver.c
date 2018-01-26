@@ -8,11 +8,11 @@ int main()
 {
     //init_graphics();
 
-    color_t test = encode_color(20,20,20);
+    color_t test = encode_color(30,20,12);
 
+   
     print_binary(test);
-
-    printf("Fuck\n");
+    printf("\n");
 
     return 0;
 }
