@@ -61,9 +61,12 @@ void exit_graphics()
     terminalSettings.c_cflag |= ~ECHO;
 }
 
+// Clear terminal
 void clear_screen()
 {
-    write(1,"poop", 4);
+    printf(sizeof("\033[2J"));
+    
+    //write(1,"\033[2J", );
 }
 
 
