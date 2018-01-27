@@ -67,8 +67,9 @@ void exit_graphics()
 // Clear terminal
 void clear_screen()
 {
-    printf("%u", sizeof('c'));
-    //write(1,"\033[2J", 5);
+    //printf("%u", sizeof('c'));
+    //printf("%u", sizeof("\033[2J"));
+    write(1,"\033[2J", 5);
 }
 
 char get_key()
@@ -102,7 +103,7 @@ char get_key()
 
 
 // Call this to make program sleep between frames of
-// graphics beinng drawn.
+// graphics being drawn.
 void sleep_ms(long ms)
 {
     struct timespec tim;
@@ -111,6 +112,31 @@ void sleep_ms(long ms)
     tim.tv_nsec = ms * (1000000L);
     
     nanosleep(&tim, NULL);
+    
+}
+
+
+
+void draw_pixel(int x, int y, color_t color)
+{
+    // 0 ...... 639
+    // .
+    // .
+    // .
+    // .
+    // 479
+    
+    framebuffer[x][y] = color;
+    
+}
+
+void draw_rect(int x1, int y1, int width, int height, color_t c)
+{
+    
+}
+
+void draw_circle(int x, int y, int r, color_t color)
+{
     
 }
 

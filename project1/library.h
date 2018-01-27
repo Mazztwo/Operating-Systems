@@ -19,7 +19,9 @@ void exit_graphics();
 void clear_screen();
 char get_key();
 void sleep_ms(long ms);
-
+void draw_pixel(int x, int y, color_t color);
+void draw_rect(int x1, int y1, int width, int height, color_t c);
+void draw_circle(int x, int y, int r, color_t color);
 color_t encode_color(int r, int g, int b);
 
 
