@@ -16,7 +16,7 @@ void init_graphics()
     int bufferSize;
     struct fb_var_screeninfo virtualResolution;
     struct fb_fix_screeninfo bitDepth;
-    void *framebuffer;
+    int *framebuffer;
     
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
@@ -33,7 +33,7 @@ void init_graphics()
     
     bufferSize = virtualResolution.yres_virtual * bitdepth.line_length;
     
-    framebuffer = mmap(0, bufferSize, MAP_SHARED, bufferFile);
+    framebuffer = (char *) mmap(0, bufferSize,PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
 
 
     
