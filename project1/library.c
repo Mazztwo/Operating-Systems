@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>          // contains ioctl() syscall
 #include <sys/select.h>         // contains select() syscall
 #include <unistd.h>             // contains write() syscall
+#include <time.h>               // contains nanosleep() syscall
 #include <termios.h>            // contains terminal struct
 #include <linux/fb.h>           // contains fb structs
 
@@ -72,7 +73,6 @@ void clear_screen()
 
 char get_key()
 {
-   // use select() and read()
     char input;
     
     // File descriptor to be watched to see if
@@ -100,6 +100,19 @@ char get_key()
     return input;
 }
 
+
+// Call this to make program sleep between frames of
+// graphics beinng drawn.
+void sleep_ms(long ms)
+{
+    struct timespec tim;
+    
+    tim.tv_sec = 0;
+    tim.tv_nsec = ms * (1000000L)
+    
+    nanosleep(&tim, NULL);
+    
+}
 
 // 16 unsigned bits to represent color.
 // Index  |  Color  |  Value

@@ -17,6 +17,8 @@ void print_binary(color_t number);
 void init_graphics();
 void exit_graphics();
 void clear_screen();
+char get_key();
+void sleep_ms(long ms);
 
 color_t encode_color(int r, int g, int b);
 
