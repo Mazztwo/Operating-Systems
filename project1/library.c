@@ -31,7 +31,7 @@ void init_graphics()
     ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
     ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
     
-    bufferSize = virtualResolution.yres_virtual * bitdepth.line_length;
+    bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
     
     framebuffer = (char *) mmap(0, bufferSize,PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
 
