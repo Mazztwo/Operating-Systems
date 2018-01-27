@@ -6,24 +6,28 @@
 #include <fcntl.h>              // contains open() syscall
 #include <sys/mman.h>           // contains mmap() syscall
 #include <sys/ioctl.h>          // contains ioctl() syscall
-#include <linux/fb.h>            // contains fb structs
+#include <termios.h>            // contains terminal struct
+#include <linux/fb.h>           // contains fb structs
+
+
+int bufferFile;
+int bufferSize;
+struct fb_var_screeninfo virtualResolution;
+struct fb_fix_screeninfo bitDepth;
+void *framebuffer;
+struct termios terminalSettings;
+
 
 // Initialize graphics library
 void init_graphics()
 {
-    // Use open() syscall to access frame buffer for read/write
-    int bufferFile;
-    int bufferSize;
-    struct fb_var_screeninfo virtualResolution;
-    struct fb_fix_screeninfo bitDepth;
-    int *framebuffer;
-    
+
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
 
     if(bufferFile < 0)
     {
-        printf("\nError opening framebuffer.\n");
+        printf("\nError accessing framebuffer.\n");
         return;
     }
     
@@ -31,15 +35,24 @@ void init_graphics()
     ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
     ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
     
+    // Calculate buffer size
     bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
     
-    framebuffer = (char *) mmap(0, bufferSize,PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
-
-
+    // Map frame buffer into memory
+    framebuffer = mmap(NULL, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
     
-   printf("\nHelloooo\n");
-
-
+    
+    // Disable echo and buffering of keypresses
+    // TCGETS & TCSETS
+    // Get current terminal settings
+    ioctl(0, TCGETS, terminalSettings);
+    
+    // unset the ICANON bit
+    // unset the ECHO bit
+    
+    
+    
+    
 }
 
 // 16 unsigned bits to represent color.

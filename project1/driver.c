@@ -10,9 +10,5 @@ int main()
 
     color_t test = encode_color(30,20,12);
 
-   
-    print_binary(test);
-    printf("\n");
-
     return 0;
 }
