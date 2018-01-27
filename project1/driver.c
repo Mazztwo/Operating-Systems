@@ -6,9 +6,13 @@
 
 int main()
 {
-    init_graphics();
+    //init_graphics();
 
     color_t test = encode_color(30,20,12);
+    
+    clear_screen();
+    
+    //exit_graphics();
 
     return 0;
 }

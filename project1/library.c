@@ -8,7 +8,7 @@
 #include <sys/ioctl.h>          // contains ioctl() syscall
 #include <termios.h>            // contains terminal struct
 #include <linux/fb.h>           // contains fb structs
-
+#include <unistd.h>             // contains write() syscall
 
 int bufferFile;
 int bufferSize;
@@ -21,15 +21,8 @@ struct termios terminalSettings;
 // Initialize graphics library
 void init_graphics()
 {
-
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
-
-    if(bufferFile < 0)
-    {
-        printf("\nError accessing framebuffer.\n");
-        return;
-    }
     
     // Grab screen info to determine buffersize
     ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
@@ -40,7 +33,6 @@ void init_graphics()
     
     // Map frame buffer into memory
     framebuffer = mmap(NULL, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
-    
     
     // Disable echo and buffering of keypresses
     // TCGETS & TCSETS
@@ -54,8 +46,6 @@ void init_graphics()
     
     // Set new terminal settings
     ioctl(0, TCSETS, terminalSettings);
-    
-    
 }
 
 // Close graphics
@@ -70,6 +60,12 @@ void exit_graphics()
     terminalSettings.c_cflag |= ~ICANON;
     terminalSettings.c_cflag |= ~ECHO;
 }
+
+void clear_screen()
+{
+    write(1,"poop", 4);
+}
+
 
 // 16 unsigned bits to represent color.
 // Index  |  Color  |  Value
