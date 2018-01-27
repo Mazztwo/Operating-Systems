@@ -6,9 +6,11 @@
 #include <fcntl.h>              // contains open() syscall
 #include <sys/mman.h>           // contains mmap() syscall
 #include <sys/ioctl.h>          // contains ioctl() syscall
+#include <sys/select.h>         // contains select() syscall
+#include <unistd.h>             // contains write() syscall
 #include <termios.h>            // contains terminal struct
 #include <linux/fb.h>           // contains fb structs
-#include <unistd.h>             // contains write() syscall
+
 
 int bufferFile;
 int bufferSize;
@@ -64,7 +66,38 @@ void exit_graphics()
 // Clear terminal
 void clear_screen()
 {
-    write(1,"\033[2J", 5);
+    printf("%u", sizeof('c'));
+    //write(1,"\033[2J", 5);
+}
+
+char get_key()
+{
+   // use select() and read()
+    char input;
+    
+    // File descriptor to be watched to see if
+    // a char is available for read()-ing
+    fd_set rfds;
+    struct timeval timevalue;
+    
+    // Clears sets
+    FD_ZERO(&timeValue);
+    
+    // Adds stdin file descriptor to set
+    FD_SET(0, &timevalue);
+    
+    int canRead = select(1, &rfds, NULL, NULL, &timevalue);
+    
+    // If canRead is positive, it means a character is ready
+    // to be read.
+    if(canRead > 0)
+    {
+        // sizeof(char) in C is 4....
+        read(0, &input, 4);
+    }
+    
+    
+    retun input;
 }
 
 
@@ -97,6 +130,8 @@ color_t encode_color(int r, int g, int b)
 
     return rgb;
 }
+
+
 
 // DEBUG FUNCTIONS:
 void print_binary(color_t number)
