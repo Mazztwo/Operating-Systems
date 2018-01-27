@@ -92,7 +92,7 @@ char get_key()
     // to be read.
     if(canRead > 0)
     {
-        // sizeof(char) in C is 4....
+        // sizeof(char) in C is 4
         read(0, &input, 4);
     }
     
