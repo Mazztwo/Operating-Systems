@@ -29,7 +29,7 @@ void init_graphics()
     
     // Grab screen info to determine buffersize
     ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
-    ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitdepth);
+    ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
     
     bufferSize = virtualResolution.yres_virtual * bitdepth.line_length;
     
