@@ -64,9 +64,7 @@ void exit_graphics()
 // Clear terminal
 void clear_screen()
 {
-    printf( "%u",sizeof("\033[2J"));
-    
-    //write(1,"\033[2J", );
+    write(1,"\033[2J", 5);
 }
 
 
