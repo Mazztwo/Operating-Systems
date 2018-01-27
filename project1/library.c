@@ -49,8 +49,11 @@ void init_graphics()
     
     // unset the ICANON bit
     // unset the ECHO bit
+    terminalSettings.c_cflag &= ~ICANON;
+    terminalSettings.c_cflag &= ~ECHO;
     
-    
+    // Set new terminal settings
+    ioctl(0, TCSETS, terminalSettings);
     
     
 }
