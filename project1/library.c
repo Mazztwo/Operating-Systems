@@ -81,7 +81,7 @@ char get_key()
     struct timeval timevalue;
     
     // Clears sets
-    FD_ZERO(&timeValue);
+    FD_ZERO(&timevalue);
     
     // Adds stdin file descriptor to set
     FD_SET(0, &timevalue);
