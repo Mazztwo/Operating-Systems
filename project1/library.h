@@ -8,6 +8,7 @@
 //  11-15 |   red   |   0-31
 typedef unsigned short color_t;
 
+
 // DEBUG FUNCTIONS:
 void print_binary(color_t number);
 //////////////////

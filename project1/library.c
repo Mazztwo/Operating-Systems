@@ -3,16 +3,22 @@
 
 #include <stdio.h>
 #include "library.h"
-#include <fcntl.h> // contains open() syscall
-#include <sys/mman.h> // contains mmap() syscall
+#include <fcntl.h>              // contains open() syscall
+#include <sys/mman.h>           // contains mmap() syscall
+#include <sys/ioctl.h>          // contains ioctl() syscall
+#include <linux/fb.h>            // contains fb structs
 
 // Initialize graphics library
 void init_graphics()
 {
     // Use open() syscall to access frame buffer for read/write
     int bufferFile;
+    int bufferSize;
+    struct fb_var_screeninfo virtualResolution;
+    struct fb_fix_screeninfo bitDepth;
     void *framebuffer;
     
+    // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
 
     if(bufferFile < 0)
@@ -20,9 +26,14 @@ void init_graphics()
         printf("\nError opening framebuffer.\n");
         return;
     }
-
-    // Need len of buffer --> need resolution for this
-    //framebuffer = mmap(0, len, MAP_SHARED)
+    
+    // Grab screen info to determine buffersize
+    ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
+    ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitdepth);
+    
+    bufferSize = virtualResolution.yres_virtual * bitdepth.line_length;
+    
+    framebuffer = mmap(0, bufferSize, MAP_SHARED, bufferFile);
 
 
     
