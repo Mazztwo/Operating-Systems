@@ -126,7 +126,12 @@ void draw_pixel(int x, int y, color_t color)
     // .
     // 479
     
-    framebuffer[x][y] = color;
+    // Start at frame buffer
+    // To get correct row, add y value
+    // To get correct col, add the virtual x value with input x
+    // Tultiply together to get correct address,
+    // then dereference and place the color bits at that address.
+    *(framebuffer + y * virtualResolution.xres_virtual + x)  = color;
     
 }
 
