@@ -108,7 +108,7 @@ void sleep_ms(long ms)
     struct timespec tim;
     
     tim.tv_sec = 0;
-    tim.tv_nsec = ms * (1000000L)
+    tim.tv_nsec = ms * (1000000L);
     
     nanosleep(&tim, NULL);
     
