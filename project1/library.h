@@ -13,7 +13,9 @@ typedef unsigned short color_t;
 void print_binary(color_t number);
 //////////////////
 
+
 void init_graphics();
+void exit_graphics();
 
 color_t encode_color(int r, int g, int b);
 

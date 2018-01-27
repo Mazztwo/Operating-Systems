@@ -58,6 +58,19 @@ void init_graphics()
     
 }
 
+// Close graphics
+void exit_graphics()
+{
+    // Close all files
+    // Un-memmap buffer
+    // Reset terminal settings
+    close(bufferFile);
+    munmap(bufferFile, bufferSize);
+    
+    terminalSettings.c_cflag |= ~ICANON;
+    terminalSettings.c_cflag |= ~ECHO;
+}
+
 // 16 unsigned bits to represent color.
 // Index  |  Color  |  Value
 //  0-4   |   blue  |   0-31 
