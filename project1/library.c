@@ -97,7 +97,7 @@ char get_key()
     }
     
     
-    retun input;
+    return input;
 }
 
 
