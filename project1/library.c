@@ -81,10 +81,10 @@ char get_key()
     struct timeval timevalue;
     
     // Clears sets
-    FD_ZERO(&timevalue);
+    FD_ZERO(&rfds);
     
     // Adds stdin file descriptor to set
-    FD_SET(0, &timevalue);
+    FD_SET(0, &rfds);
     
     int canRead = select(1, &rfds, NULL, NULL, &timevalue);
     
