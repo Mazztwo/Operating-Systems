@@ -132,7 +132,7 @@ void draw_pixel(int x, int y, color_t color)
     // To get correct col, add the input x
     // Dereference and place the color bits at that address.
     int offset = ((y * virtualResolution.xres_virtual) + x);
-    int* addr = framebuffer + offset;
+    color_t* addr = framebuffer + offset;
     *addr = color;
     
 }
