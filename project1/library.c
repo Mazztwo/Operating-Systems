@@ -133,7 +133,9 @@ void draw_pixel(int x, int y, color_t color)
     // Dereference and place the color bits at that address.
     
     //int offset = (y * virtualResolution.xres_virtual) + x;
-    int offset = (x * bitDepth.line_length) + (2*y);
+    //int offset = (x * bitDepth.line_length) + (2*y);
+    
+    int offset = (virtualResolution.yres_virtual * y) + (bitDepth.line_length * x);
     color_t* addr = framebuffer + offset;
     *addr = color;
     
