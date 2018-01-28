@@ -119,6 +119,7 @@ void sleep_ms(long ms)
 
 void draw_pixel(int x, int y, color_t color)
 {
+    // SCREEN:
     // 0 ...... 639
     // .
     // .
@@ -129,8 +130,7 @@ void draw_pixel(int x, int y, color_t color)
     // Start at frame buffer
     // To get correct row, add y value multiplied by the virtual x
     // To get correct col, add the input x
-    // Tultiply together to get correct address,
-    // then dereference and place the color bits at that address.
+    // Dereference and place the color bits at that address.
     int offset = ((y * virtualResolution.xres_virtual) + x);
     int* addr = framebuffer + offset;
     *addr = color;
