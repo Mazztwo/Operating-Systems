@@ -7,7 +7,7 @@
 int main()
 {
     init_graphics();
-    clear_screen();
+    //clear_screen();
     
     
     //color_t color;
