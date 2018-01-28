@@ -14,9 +14,12 @@ int main()
     
     draw_pixel(50, 50, color);
     
-    while(get_key() != 'q')
+    char key;
+    key = get_key();
+    
+    while(key != 'q')
     {
-        
+        key = get_key();
     }
     exit_graphics();
 
