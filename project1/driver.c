@@ -14,7 +14,7 @@ int main()
     color = encode_color(30, 0, 0);
     
     
-    draw_pixel(50, 50, color);
+    //draw_pixel(50, 50, color);
     
     /*
     char key;
@@ -25,6 +25,8 @@ int main()
         key = get_key();
     }
      */
+    
+    
     
     exit_graphics();
 

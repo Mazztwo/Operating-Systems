@@ -69,7 +69,11 @@ void clear_screen()
 {
     //printf("%u", sizeof('c'));
     //printf("%u", sizeof("\033[2J"));
-    write(1,"\033[2J", 5);
+    
+    printf(framebuffer);
+    
+    
+    //write(1,"\033[2J", 5);
 }
 
 char get_key()
@@ -135,7 +139,6 @@ void draw_pixel(int x, int y, color_t color)
     //int offset = (y * virtualResolution.xres_virtual) + x;
     //int offset = (x * bitDepth.line_length) + (2*y);
     
-    int offset = (virtualResolution.yres_virtual + y) * (bitDepth.line_length + x);
     color_t* addr = framebuffer + offset;
     *addr = color;
     
