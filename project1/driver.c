@@ -12,7 +12,7 @@ int main()
     
     clear_screen();
     
-    /*
+    
     color_t color;
     color = encode_color(30, 0, 0);
     
@@ -25,11 +25,11 @@ int main()
     
     
     
-    //while(key != 'q')
-    //{
-    //    key = get_key();
-    //}
-     */
+    while(key != 'q')
+    {
+    	key = get_key();
+    }
+    
     
     exit_graphics();
 
