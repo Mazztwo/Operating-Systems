@@ -70,10 +70,10 @@ void clear_screen()
     //printf("%u", sizeof('c'));
     //printf("%u", sizeof("\033[2J"));
     
-    printf(framebuffer);
+    //printf(framebuffer);
     
     
-    //write(1,"\033[2J", 5);
+    write(1,"\033[2J", 5);
 }
 
 char get_key()

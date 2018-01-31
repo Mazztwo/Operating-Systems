@@ -16,18 +16,18 @@ int main()
     color = encode_color(30, 0, 0);
     
     
-    //draw_pixel(50, 50, color);
-    //draw_pixel(50, 60, color);
-    //draw_pixel(50, 70, color);
-    //draw_pixel(50, 80, color);
-    //draw_pixel(50, 90, color);
+    draw_pixel(50, 50, color);
+    draw_pixel(50, 60, color);
+    draw_pixel(50, 70, color);
+    draw_pixel(50, 80, color);
+    draw_pixel(50, 90, color);
     
     
     
-    while(key != 'q')
-    {
-        key = get_key();
-    }
+    //while(key != 'q')
+    //{
+    //    key = get_key();
+    //}
      
     
     exit_graphics();
