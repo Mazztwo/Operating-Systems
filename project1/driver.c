@@ -6,7 +6,7 @@
 
 int main()
 {
-    char key =' p';
+    char key = 'p';
     
     init_graphics();
     clear_screen();
