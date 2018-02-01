@@ -60,8 +60,12 @@ void exit_graphics()
     close(bufferFile);
     munmap(bufferFile, bufferSize);
     
+    ioctl(0, TCGETS, terminalSettings);
+    
     terminalSettings.c_cflag |= ~ICANON;
     terminalSettings.c_cflag |= ~ECHO;
+    
+    ioctl(0, TCSETS, terminalSettings);
 }
 
 // Clear terminal
