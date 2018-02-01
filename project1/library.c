@@ -180,7 +180,7 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
     {
         for(w = 0; w < width; w++)
         {
-            draw_pixel(x1+width, y1+h, c);
+            draw_pixel(x1+w, y1+h, c);
         }
     }
 }
