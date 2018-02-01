@@ -29,19 +29,28 @@ void init_graphics()
     
     if(bufferFile < 0)
     {
-        printf("FAILED");
+        printf("FAILED\n");
     }
     else
     {
-        printf("Didn't fail?");
+        printf("Didn't fail.\n");
     }
     
     // Grab screen info to determine buffersize
-    ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
-    ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
+    int var = ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
+    int fix = ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
     
-    // Calculate buffer size
-    bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
+    if(var != -1 && fix != -1)
+    {
+        // Calculate buffer size
+        bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
+    }
+    else
+    {
+        printf("Fixed and var failed!\n");
+    }
+    
+    
     
     // Map frame buffer into memory
     framebuffer = mmap(0, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
