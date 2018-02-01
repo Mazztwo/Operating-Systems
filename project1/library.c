@@ -29,7 +29,11 @@ void init_graphics()
     
     if(bufferFile < 0)
     {
-        write(1,"FAILED",6);
+        printf("FAILED");
+    }
+    else
+    {
+        print("Didn't fail?");
     }
     
     // Grab screen info to determine buffersize
