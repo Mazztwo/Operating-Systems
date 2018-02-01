@@ -65,14 +65,14 @@ void init_graphics()
     // Disable echo and buffering of keypresses
     // TCGETS & TCSETS
     // Get current terminal settings
-    ioctl(0, TCGETS, terminalSettings);
+    ioctl(0, TCGETS, &terminalSettings);
     
     // unset the ICANON bit
     // unset the ECHO bit
     terminalSettings.c_lflag &= ~(ICANON| ECHO);
 
     // Set new terminal settings
-    ioctl(0, TCSETS, terminalSettings);
+    ioctl(0, TCSETS, &terminalSettings);
 }
 
 // Close graphics
@@ -85,13 +85,13 @@ void exit_graphics()
     munmap(bufferFile, bufferSize);
     
     // Get current terminal settings
-    ioctl(0, TCGETS, terminalSettings);
+    ioctl(0, TCGETS, &terminalSettings);
     
     // Turn on echo and buffering again
     terminalSettings.c_lflag |= ~(ICANON| ECHO);
     
     // Set new terminal settings
-    ioctl(0, TCSETS, terminalSettings);
+    ioctl(0, TCSETS, &terminalSettings);
 }
 
 // Clear terminal
