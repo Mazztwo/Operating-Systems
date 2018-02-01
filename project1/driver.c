@@ -14,7 +14,7 @@ int main()
     
     
     color_t color;
-    color = encode_color(30, 0, 0);
+    color = encode_color(0, 60, 0);
     
     
     draw_pixel(50, 50, color);
