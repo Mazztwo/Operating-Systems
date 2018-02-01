@@ -9,6 +9,7 @@ int main()
     char key = 'm';
     
     init_graphics();
+    /*
     clear_screen();
     
     
@@ -28,7 +29,7 @@ int main()
     //{
     //    key = get_key();
     //}
-     
+     */
     
     exit_graphics();
 
