@@ -195,14 +195,14 @@ void draw_circle(int x, int y, int r, color_t color)
     
     while (x >= y)
     {
-        putpixel(x + x0, y + y0);
-        putpixel(x + y0, y + x0);
-        putpixel(x - y0, y + x0);
-        putpixel(x - x0, y + y0);
-        putpixel(x - x0, y - y0);
-        putpixel(x - y0, y - x0);
-        putpixel(x + y0, y - x0);
-        putpixel(x + x0, y - y0);
+        draw_pixel(x + x0, y + y0, color);
+        draw_pixel(x + y0, y + x0, color);
+        draw_pixel(x - y0, y + x0, color);
+        draw_pixel(x - x0, y + y0, color);
+        draw_pixel(x - x0, y - y0, color);
+        draw_pixel(x - y0, y - x0, color);
+        draw_pixel(x + y0, y - x0, color);
+        draw_pixel(x + x0, y - y0, color);
         
         if (err <= 0)
         {
