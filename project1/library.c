@@ -11,6 +11,10 @@
 #include <time.h>               // contains nanosleep() syscall
 #include <termios.h>            // contains terminal struct
 #include <linux/fb.h>           // contains fb structs
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
 
 
 int bufferFile;
@@ -29,11 +33,11 @@ void init_graphics()
     
     if(bufferFile < 0)
     {
-        printf("FAILED\n");
+        printf("Framebuffer failed to open.\n");
     }
     else
     {
-        printf("Didn't fail.\n");
+        printf("Framebuffer opened successfully.\n");
     }
     
     // Grab screen info to determine buffersize
@@ -42,12 +46,14 @@ void init_graphics()
     
     if(var != -1 && fix != -1)
     {
+        printf("Var and fixed screen info accessed successfully.\n");
+        
         // Calculate buffer size
         bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
     }
     else
     {
-        printf("Fixed and var failed!\n");
+        printf("Fixed and var screen info failed to be accessed.\n");
     }
     
     
