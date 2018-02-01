@@ -33,7 +33,7 @@ void init_graphics()
     }
     else
     {
-        print("Didn't fail?");
+        printf("Didn't fail?");
     }
     
     // Grab screen info to determine buffersize
