@@ -102,6 +102,7 @@ void clear_screen()
     
     
     write(1,"\033[2J", 5);
+    write(1,"\033[?12l",6);
 }
 
 char get_key()
