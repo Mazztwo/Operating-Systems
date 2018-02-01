@@ -69,9 +69,8 @@ void init_graphics()
     
     // unset the ICANON bit
     // unset the ECHO bit
-    terminalSettings.c_lflag &= ~ICANON;
-    terminalSettings.c_lflag &= ~ECHO;
-    
+    terminalSettings.c_lflag &= ~(ICANON| ECHO);
+
     // Set new terminal settings
     ioctl(0, TCSETS, terminalSettings);
 }
@@ -89,8 +88,7 @@ void exit_graphics()
     ioctl(0, TCGETS, terminalSettings);
     
     // Turn on echo and buffering again
-    terminalSettings.c_lflag |= ~ICANON;
-    terminalSettings.c_lflag |= ~ECHO;
+    terminalSettings.c_lflag |= ~(ICANON| ECHO);
     
     // Set new terminal settings
     ioctl(0, TCSETS, terminalSettings);
