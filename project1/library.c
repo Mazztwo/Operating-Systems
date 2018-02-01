@@ -41,10 +41,10 @@ void init_graphics()
     }
     
     // Grab screen info to determine buffersize
-    int var = ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
-    int fix = ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
+    int var = ioctl(bufferFile, FBIOGET_VSCREENINFO, virtualResolution);
+    int fix = ioctl(bufferFile, FBIOGET_FSCREENINFO, bitDepth);
     
-    if(var != -1 && fix != -1)
+    if(var != -1 || fix != -1)
     {
         printf("Var and fixed screen info accessed successfully.\n");
         
