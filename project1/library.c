@@ -174,9 +174,11 @@ void draw_pixel(int x, int y, color_t color)
 
 void draw_rect(int x1, int y1, int width, int height, color_t c)
 {
-    for(int h = 0; h < height; h++)
+    int h, w;
+    
+    for(h = 0; h < height; h++)
     {
-        for(int w = 0; w < width; w++)
+        for(w = 0; w < width; w++)
         {
             draw_pixel(x1+width, y1+h, c);
         }
