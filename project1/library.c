@@ -35,7 +35,7 @@ void init_graphics()
     bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
     
     // Map frame buffer into memory
-    framebuffer = mmap(NULL, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
+    framebuffer = mmap(0, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
     
     // Disable echo and buffering of keypresses
     // TCGETS & TCSETS
