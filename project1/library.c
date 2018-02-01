@@ -102,7 +102,7 @@ void clear_screen()
     
     
     write(1,"\033[2J", 5);
-    write(1,"\033[?12l",6);
+    write(1,"\033[?12l",7);
 }
 
 char get_key()
@@ -174,7 +174,13 @@ void draw_pixel(int x, int y, color_t color)
 
 void draw_rect(int x1, int y1, int width, int height, color_t c)
 {
-    
+    for(int h = 0; h < height; h++)
+    {
+        for(int w = 0; w < width; w++)
+        {
+            draw_pixel(x1+width, y1+h, c);
+        }
+    }
 }
 
 void draw_circle(int x, int y, int r, color_t color)
