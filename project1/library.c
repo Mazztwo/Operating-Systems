@@ -23,7 +23,8 @@ struct fb_var_screeninfo virtualResolution;
 struct fb_fix_screeninfo bitDepth;
 
 void *framebuffer;
-struct termios terminalSettings;
+struct termios graphicsTerminalSettings;
+struct termios originalTerminalSettings
 
 
 // Initialize graphics library
@@ -65,14 +66,17 @@ void init_graphics()
     // Disable echo and buffering of keypresses
     // TCGETS & TCSETS
     // Get current terminal settings
-    ioctl(0, TCGETS, &terminalSettings);
+    ioctl(0, TCGETS, &originalTerminalSettings);
+    
+    // Preserve working terminal settings by making copy
+    graphicsTerminalSettings = originalTerminalSettings;
     
     // unset the ICANON bit
     // unset the ECHO bit
-    terminalSettings.c_lflag &= ~(ICANON| ECHO);
+    graphicsTerminalSettings.c_lflag &= ~(ICANON| ECHO);
 
     // Set new terminal settings
-    ioctl(0, TCSETS, &terminalSettings);
+    ioctl(0, TCSETS, &graphicsTerminalSettings);
 }
 
 // Close graphics
@@ -83,15 +87,9 @@ void exit_graphics()
     // Reset terminal settings
     close(bufferFile);
     munmap(bufferFile, bufferSize);
-    
-    // Get current terminal settings
-    ioctl(0, TCGETS, &terminalSettings);
-    
-    // Turn on echo and buffering again
-    terminalSettings.c_lflag |= ~(ICANON| ECHO);
-    
-    // Set new terminal settings
-    ioctl(0, TCSETS, &terminalSettings);
+
+    // Restore terminal settings
+    ioctl(0, TCSETS, &originalTerminalSetting);
 }
 
 // Clear terminal
