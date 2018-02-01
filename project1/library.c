@@ -24,7 +24,7 @@ struct fb_fix_screeninfo bitDepth;
 
 void *framebuffer;
 struct termios graphicsTerminalSettings;
-struct termios originalTerminalSettings
+struct termios originalTerminalSettings;
 
 
 // Initialize graphics library
