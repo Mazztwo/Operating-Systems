@@ -21,6 +21,7 @@ int bufferFile;
 int bufferSize;
 struct fb_var_screeninfo virtualResolution;
 struct fb_fix_screeninfo bitDepth;
+
 void *framebuffer;
 struct termios terminalSettings;
 
@@ -41,8 +42,8 @@ void init_graphics()
     }
     
     // Grab screen info to determine buffersize
-    int var = ioctl(bufferFile, FBIOGET_VSCREENINFO, virtualResolution);
-    int fix = ioctl(bufferFile, FBIOGET_FSCREENINFO, bitDepth);
+    int var = ioctl(bufferFile, FBIOGET_VSCREENINFO, &virtualResolution);
+    int fix = ioctl(bufferFile, FBIOGET_FSCREENINFO, &bitDepth);
     
     if(var != -1 || fix != -1)
     {
