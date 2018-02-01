@@ -139,7 +139,7 @@ void draw_pixel(int x, int y, color_t color)
     //int offset = (y * virtualResolution.xres_virtual) + x;
     //int offset = (x * bitDepth.line_length) + (2*y);
     
-    int offset = (bitDepth.linelengh * y) + (2*x);
+    int offset = (bitDepth.line_length * y) + (2*x);
     color_t* addr = framebuffer + offset;
     *addr = color;
     
