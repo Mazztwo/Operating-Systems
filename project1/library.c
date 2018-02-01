@@ -89,7 +89,7 @@ void exit_graphics()
     munmap(bufferFile, bufferSize);
 
     // Restore terminal settings
-    ioctl(0, TCSETS, &originalTerminalSetting);
+    ioctl(0, TCSETS, &originalTerminalSettings);
 }
 
 // Clear terminal
