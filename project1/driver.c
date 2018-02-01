@@ -26,6 +26,7 @@ int main()
 
     draw_rect(50, 50, 100, 100, color);
     
+    draw_circle(200, 200, 30, color);
     
     
     while(key != 'q')

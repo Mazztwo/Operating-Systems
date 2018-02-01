@@ -187,7 +187,37 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
 
 void draw_circle(int x, int y, int r, color_t color)
 {
+    int x0 = r-1;
+    int y0 = 0;
+    int dx = 1;
+    int dy = 1;
+    int err = dx - (r << 1);
     
+    while (x >= y)
+    {
+        putpixel(x + x0, y + y0);
+        putpixel(x + y0, y + x0);
+        putpixel(x - y0, y + x0);
+        putpixel(x - x0, y + y0);
+        putpixel(x - x0, y - y0);
+        putpixel(x - y0, y - x0);
+        putpixel(x + y0, y - x0);
+        putpixel(x + x0, y - y0);
+        
+        if (err <= 0)
+        {
+            y0++;
+            err += dy;
+            dy += 2;
+        }
+        
+        if (err > 0)
+        {
+            x0--;
+            dx += 2;
+            err += dx - (r << 1);
+        }
+    }
 }
 
 // 16 unsigned bits to represent color.
