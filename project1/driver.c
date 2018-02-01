@@ -9,10 +9,10 @@ int main()
     char key = 'm';
     
     init_graphics();
-    /*
+    
     clear_screen();
     
-    
+    /*
     color_t color;
     color = encode_color(30, 0, 0);
     

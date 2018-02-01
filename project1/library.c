@@ -32,6 +32,7 @@ void init_graphics()
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
     
+    // Check to make sure buffer accessed without error.
     if(bufferFile < 0)
     {
         printf("Framebuffer failed to open.\n");
@@ -45,6 +46,7 @@ void init_graphics()
     int var = ioctl(bufferFile, FBIOGET_VSCREENINFO, &virtualResolution);
     int fix = ioctl(bufferFile, FBIOGET_FSCREENINFO, &bitDepth);
     
+    // Check to make sure screen info accessed without error.
     if(var != -1 || fix != -1)
     {
         printf("Var and fixed screen info accessed successfully.\n");
@@ -56,8 +58,6 @@ void init_graphics()
     {
         printf("Fixed and var screen info failed to be accessed.\n");
     }
-    
-    
     
     // Map frame buffer into memory
     framebuffer = mmap(0, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
