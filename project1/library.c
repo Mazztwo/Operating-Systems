@@ -27,6 +27,11 @@ void init_graphics()
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
     
+    if(bufferFile < 0)
+    {
+        write(1,"FAILED",6);
+    }
+    
     // Grab screen info to determine buffersize
     ioctl(bufferFile, "FBIOGET_VSCREENINFO", virtualResolution);
     ioctl(bufferFile, "FBIOGET_FSCREENINFO", bitDepth);
