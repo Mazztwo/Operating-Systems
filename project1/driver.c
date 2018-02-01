@@ -24,7 +24,7 @@ int main()
     draw_pixel(50, 90, color);
     */
 
-    draw_rect(50, 50, 200, 300, color);
+    draw_rect(50, 50, 100, 100, color);
     
     
     
