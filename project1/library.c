@@ -102,7 +102,6 @@ void clear_screen()
     
     
     write(1,"\033[2J", 5);
-    write(1,"\033[?12l",7);
 }
 
 char get_key()
@@ -185,47 +184,39 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
     }
 }
 
-void draw_circle(int x, int y, int r, color_t color)
+void draw_circle(int x0, int y0, int radius, color_t color)
 {
-    int x0 = r;
-    int y0 = 0;
+    int x = radius-1;
+    int y = 0;
     int dx = 1;
     int dy = 1;
-    int err = dx - (r << 1);
+    int err = dx - (radius << 1);
     
     while (x >= y)
     {
-        draw_pixel(x + x0, y + y0, color);
-        draw_pixel(x + y0, y + x0, color);
-        draw_pixel(x - y0, y + x0, color);
-        draw_pixel(x - x0, y + y0, color);
-        draw_pixel(x - x0, y - y0, color);
-        draw_pixel(x - y0, y - x0, color);
-        draw_pixel(x + y0, y - x0, color);
-        draw_pixel(x + x0, y - y0, color);
+        draw_pixel(x0 + x, y0 + y, color);
+        draw_pixel(x0 + y, y0 + x, color);
+        draw_pixel(x0 - y, y0 + x, color);
+        draw_pixel(x0 - x, y0 + y, color);
+        draw_pixel(x0 - x, y0 - y, color);
+        draw_pixel(x0 - y, y0 - x, color);
+        draw_pixel(x0 + y, y0 - x, color);
+        draw_pixel(x0 + x, y0 - y, color);
         
         if (err <= 0)
         {
-            y0++;
+            y++;
             err += dy;
             dy += 2;
         }
         
         if (err > 0)
         {
-            x0--;
+            x--;
             dx += 2;
-            err += dx - (r << 1);
+            err += dx - (radius << 1);
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
 }
 
 // 16 unsigned bits to represent color.
