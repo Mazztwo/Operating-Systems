@@ -11,11 +11,14 @@ int main()
     int MAX_X = 639;
     int MAX_Y = 479;
     
+    
     init_graphics();
     clear_screen();
     
-    color_t color;
+    color_t color, reset_black;
     color = encode_color(0, 60, 0);
+    reset_black = encode_color(0, 0, 0);
+    
     
     x = 50, y = 50, width = 100, height = 100;
     draw_rect(x, y, width, height, color);
@@ -27,11 +30,14 @@ int main()
     {
         if(key == 'w')
         {
-            if( !(y-radius < 0) )
+            if( !(y-radius <= 0) )
             {
+                draw_circle(x, y, radius, reset_black);
                 y--;
+                sleep_ms(5000);
                 draw_circle(x, y, radius, color);
             }
+            
         }
         
         
