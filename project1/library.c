@@ -184,7 +184,7 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
     }
 }
 
-void draw_circle(int x0, int y0, int r, color_t color)
+void draw_circle(int x0, int y0, int r, color_t c)
 {
     while(r > 0)
     {
