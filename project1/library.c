@@ -187,7 +187,7 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
 
 void draw_circle(int x, int y, int r, color_t color)
 {
-    int x0 = r-1;
+    int x0 = r;
     int y0 = 0;
     int dx = 1;
     int dy = 1;
@@ -218,6 +218,14 @@ void draw_circle(int x, int y, int r, color_t color)
             err += dx - (r << 1);
         }
     }
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
 // 16 unsigned bits to represent color.
