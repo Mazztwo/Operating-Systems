@@ -33,6 +33,7 @@ void init_graphics()
     // Open frame buffer
     bufferFile = open("/dev/fb0", O_RDWR);
     
+    /*
     // Check to make sure buffer accessed without error.
     if(bufferFile < 0)
     {
@@ -42,23 +43,25 @@ void init_graphics()
     {
         printf("Framebuffer opened successfully.\n");
     }
+     */
     
     // Grab screen info to determine buffersize
     int var = ioctl(bufferFile, FBIOGET_VSCREENINFO, &virtualResolution);
     int fix = ioctl(bufferFile, FBIOGET_FSCREENINFO, &bitDepth);
     
+    
     // Check to make sure screen info accessed without error.
     if(var != -1 || fix != -1)
     {
-        printf("Var and fixed screen info accessed successfully.\n");
+        //printf("Var and fixed screen info accessed successfully.\n");
         
         // Calculate buffer size
         bufferSize = virtualResolution.yres_virtual * bitDepth.line_length;
     }
-    else
+    /*else
     {
         printf("Fixed and var screen info failed to be accessed.\n");
-    }
+    }*/
     
     // Map frame buffer into memory
     framebuffer = mmap(0, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, bufferFile, 0);
@@ -255,7 +258,7 @@ color_t encode_color(int r, int g, int b)
     return rgb;
 }
 
-
+/*
 
 // DEBUG FUNCTIONS:
 void print_binary(color_t number)
@@ -265,3 +268,4 @@ void print_binary(color_t number)
         putc((number & 1) ? '1' : '0', stdout);
     }
 }
+ */

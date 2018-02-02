@@ -73,7 +73,6 @@ int main()
             
         }
         
-        
     	key = get_key();
     }
     
