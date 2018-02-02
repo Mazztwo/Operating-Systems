@@ -39,6 +39,39 @@ int main()
             }
             
         }
+        if(key == 's')
+        {
+            if( !(y-radius >= MAX_Y) )
+            {
+                draw_circle(x, y, radius, reset_black);
+                y++;
+                sleep_ms(1);
+                draw_circle(x, y, radius, color);
+            }
+            
+        }
+        if(key == 'a')
+        {
+            if( !(x-radius <= 0) )
+            {
+                draw_circle(x, y, radius, reset_black);
+                x--;
+                sleep_ms(1);
+                draw_circle(x, y, radius, color);
+            }
+            
+        }
+        if(key == 'd')
+        {
+            if( !(x-radius >= MAX_X) )
+            {
+                draw_circle(x, y, radius, reset_black);
+                x++;
+                sleep_ms(1);
+                draw_circle(x, y, radius, color);
+            }
+            
+        }
         
         
     	key = get_key();
