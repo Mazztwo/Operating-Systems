@@ -34,7 +34,7 @@ int main()
             {
                 draw_circle(x, y, radius, reset_black);
                 y--;
-                sleep_ms(5000);
+                sleep_ms(1);
                 draw_circle(x, y, radius, color);
             }
             
