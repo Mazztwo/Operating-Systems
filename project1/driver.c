@@ -30,10 +30,10 @@ int main()
     {
         if(key == 'w')
         {
-            if( !(y-radius <= 0) )
+            if( !(y-(radius+5) <= 0) )
             {
                 draw_circle(x, y, radius, reset_black);
-                y--;
+                y -= 5;
                 sleep_ms(1);
                 draw_circle(x, y, radius, color);
             }
@@ -41,10 +41,10 @@ int main()
         }
         if(key == 's')
         {
-            if( !(y-radius >= MAX_Y) )
+            if( !(y+radius+5 >= MAX_Y) )
             {
                 draw_circle(x, y, radius, reset_black);
-                y++;
+                y += 5;
                 sleep_ms(1);
                 draw_circle(x, y, radius, color);
             }
@@ -52,10 +52,10 @@ int main()
         }
         if(key == 'a')
         {
-            if( !(x-radius <= 0) )
+            if( !(x-(radius+5) <= 0) )
             {
                 draw_circle(x, y, radius, reset_black);
-                x--;
+                x -= 5;
                 sleep_ms(1);
                 draw_circle(x, y, radius, color);
             }
@@ -63,10 +63,10 @@ int main()
         }
         if(key == 'd')
         {
-            if( !(x-radius >= MAX_X) )
+            if( !(x+radius+5 >= MAX_X) )
             {
                 draw_circle(x, y, radius, reset_black);
-                x++;
+                x += 5;
                 sleep_ms(1);
                 draw_circle(x, y, radius, color);
             }
