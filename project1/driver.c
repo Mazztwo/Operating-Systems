@@ -7,6 +7,7 @@
 int main()
 {
     char key = 'm';
+    int x, y, width, height, radius;
     
     init_graphics();
     
@@ -24,13 +25,18 @@ int main()
     draw_pixel(50, 90, color);
     */
 
-    draw_rect(50, 50, 100, 100, color);
+
+    x = 50, y = 50, width = 100, height = 100;
+    draw_rect(x, y, width, height, color);
     
-    draw_circle(200, 200, 30, color);
+    
+    x = 200, y = 200, radius = 30;
+    draw_circle(x, y, radius, color);
     
     
     while(key != 'q')
     {
+        
     	key = get_key();
     }
     
