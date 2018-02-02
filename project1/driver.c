@@ -29,6 +29,7 @@ int main()
         {
             if( !(y-radius < 0) )
             {
+                y--;
                 draw_circle(x, y, radius, color);
             }
         }
