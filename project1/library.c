@@ -184,38 +184,44 @@ void draw_rect(int x1, int y1, int width, int height, color_t c)
     }
 }
 
-void draw_circle(int x0, int y0, int radius, color_t color)
+void draw_circle(int x0, int y0, int r, color_t color)
 {
-    int x = radius-1;
-    int y = 0;
-    int dx = 1;
-    int dy = 1;
-    int err = dx - (radius << 1);
-    
-    while (x >= y)
+    while(r > 0)
     {
-        draw_pixel(x0 + x, y0 + y, color);
-        draw_pixel(x0 + y, y0 + x, color);
-        draw_pixel(x0 - y, y0 + x, color);
-        draw_pixel(x0 - x, y0 + y, color);
-        draw_pixel(x0 - x, y0 - y, color);
-        draw_pixel(x0 - y, y0 - x, color);
-        draw_pixel(x0 + y, y0 - x, color);
-        draw_pixel(x0 + x, y0 - y, color);
+        int x = r;
+        int y = 0;
+        int err = 1 - x;
         
-        if (err <= 0)
+        while(y<=x)
         {
+            draw_pixel(x0 + x, y0 + y, c);
+            draw_pixel(x0 + y, y0 + x, c);
+            draw_pixel(x0 - y, y0 + x, c);
+            draw_pixel(x0 - x, y0 + y, c);
+            draw_pixel(x0 - x, y0 - y, c);
+            draw_pixel(x0 - y, y0 - x, c);
+            draw_pixel(x0 + y, y0 - x, c);
+            draw_pixel(x0 + x, y0 - y, c);
+            
             y++;
-            err += dy;
-            dy += 2;
+            
+            if(err <= 0)
+            {
+                err += (2 * y) + 1;
+            }
+            else
+            {
+                x--;
+                err += 2 * (y - x) + 1;
+            }
         }
-        
-        if (err > 0)
-        {
-            x--;
-            dx += 2;
-            err += dx - (radius << 1);
-        }
+        r--;
+    }
+    
+    // Draw center pixel
+    if(r==0)
+    {
+        draw_pixel(x0, y0, c);
     }
 }
 
