@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		CA545FF9203BD56F00DAB54A /* prodcons.c in Sources */ = {isa = PBXBuildFile; fileRef = CA545FF8203BD56F00DAB54A /* prodcons.c */; };
+		CA850849203E421400189DD7 /* sys.c in Sources */ = {isa = PBXBuildFile; fileRef = CA850848203E421400189DD7 /* sys.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,7 @@
 /* Begin PBXFileReference section */
 		CA545FEE203BD54A00DAB54A /* project2 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = project2; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA545FF8203BD56F00DAB54A /* prodcons.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = prodcons.c; sourceTree = "<group>"; };
+		CA850848203E421400189DD7 /* sys.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sys.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +43,7 @@
 		CA545FE5203BD54A00DAB54A = {
 			isa = PBXGroup;
 			children = (
+				CA850848203E421400189DD7 /* sys.c */,
 				CA545FF8203BD56F00DAB54A /* prodcons.c */,
 				CA545FEF203BD54A00DAB54A /* Products */,
 			);
@@ -112,6 +115,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA545FF9203BD56F00DAB54A /* prodcons.c in Sources */,
+				CA850849203E421400189DD7 /* sys.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
