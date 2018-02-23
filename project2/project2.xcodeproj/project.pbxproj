@@ -10,6 +10,7 @@
 		CA850849203E421400189DD7 /* sys.c in Sources */ = {isa = PBXBuildFile; fileRef = CA850848203E421400189DD7 /* sys.c */; };
 		CAE9A0CB2040AD9D0017578E /* syscall_table.S in Sources */ = {isa = PBXBuildFile; fileRef = CAE9A0C92040AD9D0017578E /* syscall_table.S */; };
 		CAE9A0CD2040AE830017578E /* prodcons.c in Sources */ = {isa = PBXBuildFile; fileRef = CAE9A0CC2040AE830017578E /* prodcons.c */; };
+		CAE9A0CF2040C7B50017578E /* makefile in Sources */ = {isa = PBXBuildFile; fileRef = CAE9A0CE2040C7B40017578E /* makefile */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +31,7 @@
 		CAE9A0C92040AD9D0017578E /* syscall_table.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = syscall_table.S; sourceTree = "<group>"; };
 		CAE9A0CA2040AD9D0017578E /* unistd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = unistd.h; sourceTree = "<group>"; };
 		CAE9A0CC2040AE830017578E /* prodcons.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = prodcons.c; sourceTree = "<group>"; };
+		CAE9A0CE2040C7B40017578E /* makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = makefile; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +48,7 @@
 		CA545FE5203BD54A00DAB54A = {
 			isa = PBXGroup;
 			children = (
+				CAE9A0CE2040C7B40017578E /* makefile */,
 				CAE9A0CC2040AE830017578E /* prodcons.c */,
 				CAE9A0C92040AD9D0017578E /* syscall_table.S */,
 				CAE9A0CA2040AD9D0017578E /* unistd.h */,
@@ -121,6 +124,7 @@
 			files = (
 				CAE9A0CB2040AD9D0017578E /* syscall_table.S in Sources */,
 				CAE9A0CD2040AE830017578E /* prodcons.c in Sources */,
+				CAE9A0CF2040C7B50017578E /* makefile in Sources */,
 				CA850849203E421400189DD7 /* sys.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
