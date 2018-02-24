@@ -103,6 +103,10 @@ int main(int argc, char* argv[])
     int *currBufferPosition;
     currBufferPosition = buffer + 2;
 
+    // Variable used later to make sure parent waits for all children to finish
+    int status = 0
+    pid_t parent;
+    
     // Producers
     int i;
     
@@ -173,7 +177,8 @@ int main(int argc, char* argv[])
     }
     
     
-    
+    // Wait here for all children to finish
+    while( (parent = wait(&status)) > 0);
     
     return 0;
 }
