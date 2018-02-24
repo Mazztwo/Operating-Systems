@@ -54,14 +54,16 @@ int main(int argc, char* argv[])
     int bufferSize = atoi(argv[3]);
     
     // Make shared buffer before fork() so memory can be shared
-    void *buffer = mmap(NULL, bufferSize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    // Buffer includes in and out + the buffer size
+    int *buffer = (int*) mmap(NULL, (2+bufferSize)*sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
     
     // Now initialize empty, full, and mutex
     // I'm not really sure about whether or not the "buffer size" specified in the command line
     // is a hard limit, and we can mmap a buffersize + sizeof(struct cs1550_sem)*3, or if we have to
-    // make two separate buffers. I'll go with making two separate buffers just in case the directions
+    // make two separate buffers, one being the producer/consumer buffer and the other being the shared
+    // semaphore buffer. I'll go with making two separate buffers just in case the directions
     // mean that our shared buffer is exactly the size specified in the command line, no more, no less.
-    void *semaphore_space = mmap(NULL, sizeof(struct cs1550_sem)*3, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    void *semaphoreSpace = mmap(NULL, sizeof(struct cs1550_sem)*3, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
     
     struct cs1550_sem* empty;
     struct cs1550_sem* full;
@@ -73,9 +75,9 @@ int main(int argc, char* argv[])
      |    0    |   1    |    2    |
      
     */
-    empty = semaphore_space;
-    full = semaphore_space + 1;
-    mutex = semaphore_space + 2;
+    empty = semaphoreSpace;
+    full = semaphoreSpace + 1;
+    mutex = semaphoreSpace + 2;
     
     // Initial number of empty spaces is the whole buffer
     empty->value = bufferSize;
@@ -86,8 +88,25 @@ int main(int argc, char* argv[])
     // Initialize mutex to 1 (unlocked)
     mutex->value = 1;
     
-  
+    // In and out
+    int *in;
+    int *out;
+    
+    // First two items in shared buffer are in and out
+    in = buffer;
+    out = buffer + 1;
+    *in = 0;
+    *out = 0;
+    
+    // Need to keep track of current buffer position
+    // Initially right after in and out
+    int *currBufferPosition;
+    currBufferPosition = buffer + 2;
 
+    // Now we call our producer/consumer loops with fork()
+
+    
+    
     
     
     return 0;
