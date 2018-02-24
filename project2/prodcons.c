@@ -103,8 +103,74 @@ int main(int argc, char* argv[])
     int *currBufferPosition;
     currBufferPosition = buffer + 2;
 
-    // Now we call our producer/consumer loops with fork()
-
+    // Producers
+    int i;
+    
+    for(i = 0; i < numProducers; i++)
+    {
+        // Keep creating child processes if not parent.
+        // As per lecture slides, child PID = 0, while
+        // parent is something greater than 0.
+        if(fork() == 0)
+        {
+            int pitem;
+            while(1)
+            {
+                // Produce an item into pitem
+                pitem = *in;
+                
+                // Down on empty, down on mutex
+                syscall(325, empty);
+                syscall(325, mutex);
+                
+                // Add item to shared buffer
+                currBufferPosition[*in % bufferSize] = pitem;
+                
+                printf("Chef %c Produced: Pancake%d\n", i+65, pitem);
+                
+                // Increment position
+                *in += 1;
+                
+                // Up on mutex, up on full
+                syscall(326, mutex);
+                syscall(326, full);
+                
+                
+            }
+        }
+    }
+    
+    
+    // Consumers
+    for(i = 0; i < numConsumers; i++)
+    {
+        // Keep creating child processes if not parent.
+        // As per lecture slides, child PID = 0, while
+        // parent is something greater than 0.
+        if(fork() == 0)
+        {
+            int citem;
+            
+            while(1)
+            {
+                // Down on full, down on mutex
+                syscall(325, full);
+                syscall(325, mutex);
+                
+                // Get item from buffer and "consume"
+                citem = currBufferPosition[*out % bufferSize];
+                
+                printf("Customer %c Consumed: Pancake%d\n", i+65, citem);
+                
+                // Increment position
+                *out += 1;
+                
+                // Up on mutex, down on full
+                syscall(326, mutex);
+                syscall(326, empty);
+            }
+        }
+    }
     
     
     
