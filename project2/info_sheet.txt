@@ -1,0 +1,40 @@
+========================================
+CS/COE 1550 Assignment Information Sheet
+----------------------------------------
+
+You must submit an information sheet with every assignment.  Also be sure
+to submit all materials following the procedures described on the
+submission procedures page.
+
+Name:  Alessio Mazzone
+
+Lecture section:  T, TH 2:30-3:45
+
+Recitation day and time:  F 12:00
+
+Assignment #:  2
+
+Program due date:  2/25/2018
+
+Handed in date:  2/24/2018
+
+Source code file name(s):
+
+prodcons.c
+
+Other file name(s) (if relevant):
+
+makefile
+sys.c
+syscall_table.S
+unistd.h
+
+
+Does your program run without error?: Yes
+
+If not, what is/are the error(s) and which parts of your program run
+correctly?:
+
+Additional comments to the grader:
+
+
