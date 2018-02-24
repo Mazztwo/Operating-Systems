@@ -2366,7 +2366,7 @@ struct my_node
 {
 	struct task_struct* node_data;
 	struct my_node* next;
-}
+};
 
 // Semaphore struct
 struct cs1550_sem 
@@ -2374,8 +2374,8 @@ struct cs1550_sem
 	int value;
 	
 	// queue
-	struct my_ node* head;
-	struct my_ node* tail;
+	struct my_node* head;
+	struct my_node* tail;
 };
 
 // Defines spinlock macro for waiting

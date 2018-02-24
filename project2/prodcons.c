@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
      |    0    |   1    |    2    |
      
     */
-    empty = semaphoreSpace;
-    full = semaphoreSpace + 1;
-    mutex = semaphoreSpace + 2;
+    empty = (struct cs1550_sem*)semaphoreSpace;
+    full = (struct cs1550_sem*)semaphoreSpace + 1;
+    mutex = (struct cs1550_sem*)semaphoreSpace + 2;
     
     // Initial number of empty spaces is the whole buffer
     empty->value = bufferSize;
@@ -98,14 +98,21 @@ int main(int argc, char* argv[])
     *in = 0;
     *out = 0;
     
+    // Sett all buffer heads and tails to NULL
+    empty->head = NULL;
+    empty->tail = NULL;
+    full->head = NULL;
+    full->tail = NULL;
+    mutex->head = NULL;
+    mutex->tail = NULL;
+    
     // Need to keep track of current buffer position
     // Initially right after in and out
     int *currBufferPosition;
     currBufferPosition = buffer + 2;
 
     // Variable used later to make sure parent waits for all children to finish
-    int status = 0;
-    pid_t parent;
+    int status;
     
     // Producers
     int i;
@@ -118,30 +125,31 @@ int main(int argc, char* argv[])
         if(fork() == 0)
         {
             int pitem;
+            
             while(1)
             {
-                // Produce an item into pitem
-                pitem = *in;
-                
                 // Down on empty, down on mutex
                 syscall(325, empty);
                 syscall(325, mutex);
                 
-                // Add item to shared buffer
-                currBufferPosition[*in % bufferSize] = pitem;
+                // Produce an item into pitem
+                pitem = *in;
                 
+                // Add item to shared buffer
+                currBufferPosition[*in] = pitem;
                 printf("Chef %c Produced: Pancake%d\n", i+65, pitem);
                 
-                // Increment position
-                *in += 1;
+                // Increment
+                *in = (*in+1)%bufferSize;
+                
                 
                 // Up on mutex, up on full
                 syscall(326, mutex);
                 syscall(326, full);
-                
-                
+        
             }
         }
+
     }
     
     
@@ -161,24 +169,27 @@ int main(int argc, char* argv[])
                 syscall(325, full);
                 syscall(325, mutex);
                 
+               
                 // Get item from buffer and "consume"
-                citem = currBufferPosition[*out % bufferSize];
-                
+                citem = currBufferPosition[*out];
                 printf("Customer %c Consumed: Pancake%d\n", i+65, citem);
                 
-                // Increment position
-                *out += 1;
+                // Increment
+                *out = (*out+1)%bufferSize;
+    
                 
                 // Up on mutex, down on full
                 syscall(326, mutex);
                 syscall(326, empty);
+                
+                
             }
         }
     }
     
     
     // Wait here for all children to finish
-    while( (parent = wait(&status)) > 0);
+    wait(&status);
     
     return 0;
 }
