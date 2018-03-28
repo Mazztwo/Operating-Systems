@@ -36,5 +36,3 @@ If not, what is/are the error(s) and which parts of your program run
 correctly?:
 
 Additional comments to the grader:
-
-
