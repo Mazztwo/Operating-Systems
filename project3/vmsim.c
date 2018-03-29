@@ -13,6 +13,13 @@
 // Tracefile
 FILE *traceFile;
 
+// Tracefile info
+unsigned int address;
+char mode;
+
+// Total number of memory accesses
+int memoryAccesses;
+
 void OPT(int rawr)
 {
     
@@ -31,7 +38,28 @@ int main(int argc, char* argv[])
     }
     
     
-    printf("hallow\n");
+    // Read first line in trace file
+    int scan = fscanf(traceFile, "%x %c", &address, &mode);
+    
+    
+    // Initialize memoryAccesses to 0
+    // Don't initialize to 1 because below, if reading line fails, we still increment
+    // and so we account for that by initializing to 0 even though we did a memory access.
+    memoryAccesses = 0;
+    
+    // Read every line in trace file
+    while(scan > 1)
+    {
+        // Print line in trace file
+        printf("%x %c\n", address, mode);
+        
+        // Read next line in trace file
+        scan = fscanf(traceFile, "%x %c", &address, &mode);
+        memoryAccesses += 1;
+    }
+    
+    
+    printf("Total memory accesses: %d\n", memoryAccesses);
     
     fclose(traceFile);
     return 0;
