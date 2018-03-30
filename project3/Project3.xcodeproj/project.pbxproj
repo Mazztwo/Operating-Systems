@@ -48,8 +48,8 @@
 			isa = PBXGroup;
 			children = (
 				CA394F96206C60BA00DB65D0 /* makefile */,
-				CA394F94206C602200DB65D0 /* gcc.trace */,
 				CA37D503206E8ABF00E9DD90 /* gcc.trace */,
+				CA394F94206C602200DB65D0 /* gcc.trace */,
 				CA394F92206C602200DB65D0 /* swim.trace */,
 				CA394F93206C602200DB65D0 /* vmsim.c */,
 				CAF61D64206C5FF10061C9BD /* Products */,

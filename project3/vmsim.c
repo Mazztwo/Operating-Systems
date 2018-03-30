@@ -17,8 +17,10 @@ FILE *traceFile;
 unsigned int address;
 char mode;
 
-// Total number of memory accesses
-int memoryAccesses;
+// Totals
+int memoryAccesses = 0;
+int pageFaults = 0;
+int diskWrites = 0;
 
 // Command line arguments
 int numFrames;
@@ -71,14 +73,22 @@ struct Page
 // To initialize: sturct Page p1; p1.clean = 0, p1.dirty = 1
 
 
+
+
+
+
+
+
+
+
+
+
+
 // Optimum Page Replacement Algorithm
-void OPT(FILE *traceFile)
+void opt()
 {
-    struct Page frames[5];
+    struct Page frames[numFrames];
     
-    
-    // Initialize memoryAccesses
-    memoryAccesses = 0;
     
     // Read every line in trace file, and keep reading until end of file
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
@@ -91,20 +101,38 @@ void OPT(FILE *traceFile)
         memoryAccesses += 1;
     }
     
-    printf("Total memory accesses: %d\n", memoryAccesses);
     
     fclose(traceFile);
     
 }
 
 
+
+
+
+
+void displayResults()
+{
+    printf("%s\n", algorithm);
+    printf("Number of frames:        %d\n",numFrames);
+    printf("Total memory accesses:   %d\n", memoryAccesses);
+    printf("Total page faults:       %d\n", pageFaults);
+    printf("Total writes to disk:    %d\n", diskWrites);
+}
+
+
+
+
+
+
+
+
+// Parses command line arguments
 void parseCommandLine(char* argv[])
 {
     numFrames = atoi(argv[2]);
-    printf("Number of Frames: %d\n",numFrames);
     
     algorithm = argv[4];
-    printf("Algorithm: %s\n", algorithm);
     
     if(!strcmp(algorithm,"opt") || !strcmp(algorithm,"clock"))
     {
@@ -127,6 +155,26 @@ void parseCommandLine(char* argv[])
     printf("Trace file name: %s\n", fileName);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main(int argc, char* argv[])
 {
     
@@ -145,7 +193,7 @@ int main(int argc, char* argv[])
     // Call appropirate algorithm
     if(!strcmp(algorithm,"opt"))
     {
-        
+        opt();
     }
     else if(!strcmp(algorithm,"clock"))
     {
@@ -159,6 +207,10 @@ int main(int argc, char* argv[])
     {
         
     }
+    
+    
+    // Display results
+    displayResults();
     
     return 0;
 }
