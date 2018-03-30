@@ -24,6 +24,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CA37D502206E8ABE00E9DD90 /* swim.trace */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = swim.trace; path = "../../../../../../../Library/Developer/Xcode/DerivedData/Project3-fpkejmxfftnciifccxjcphzzsvoi/Build/Products/Debug/swim.trace"; sourceTree = "<group>"; };
+		CA37D503206E8ABF00E9DD90 /* gcc.trace */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = gcc.trace; path = "../../../../../../../Library/Developer/Xcode/DerivedData/Project3-fpkejmxfftnciifccxjcphzzsvoi/Build/Products/Debug/gcc.trace"; sourceTree = "<group>"; };
 		CA394F92206C602200DB65D0 /* swim.trace */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = swim.trace; sourceTree = "<group>"; };
 		CA394F93206C602200DB65D0 /* vmsim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vmsim.c; sourceTree = "<group>"; };
 		CA394F94206C602200DB65D0 /* gcc.trace */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = gcc.trace; sourceTree = "<group>"; };
@@ -47,9 +49,11 @@
 			children = (
 				CA394F96206C60BA00DB65D0 /* makefile */,
 				CA394F94206C602200DB65D0 /* gcc.trace */,
+				CA37D503206E8ABF00E9DD90 /* gcc.trace */,
 				CA394F92206C602200DB65D0 /* swim.trace */,
 				CA394F93206C602200DB65D0 /* vmsim.c */,
 				CAF61D64206C5FF10061C9BD /* Products */,
+				CA37D502206E8ABE00E9DD90 /* swim.trace */,
 			);
 			sourceTree = "<group>";
 		};
