@@ -8,22 +8,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
-
-// Tracefile
-FILE *traceFile;
 
 // Tracefile info
+FILE *traceFile;
+
 unsigned int address;
 char mode;
 
 // Total number of memory accesses
 int memoryAccesses;
 
-int numFrames = 0;
-
-
-
+// Command line arguments
+int numFrames;
+char *algorithm;
+char *fileName;
+int refr;
+int tau;
 
 
 
@@ -96,11 +98,43 @@ void OPT(FILE *traceFile)
 }
 
 
+void parseCommandLine(char* argv[])
+{
+    numFrames = atoi(argv[2]);
+    printf("Number of Frames: %d\n",numFrames);
+    
+    algorithm = argv[4];
+    printf("Algorithm: %s\n", algorithm);
+    
+    if(!strcmp(algorithm,"opt") || !strcmp(algorithm,"clock"))
+    {
+        fileName = argv[5];
+    }
+    else
+    {
+        if(!strcmp(algorithm,"aging"))
+        {
+            refr = atoi(argv[6]);
+            fileName = argv[7];
+        }
+        else // algorithm = "work"
+        {
+            tau = atoi(argv[6]);
+            fileName = argv[7];
+        }
+    }
+    
+    printf("Trace file name: %s\n", fileName);
+}
 
 int main(int argc, char* argv[])
 {
-    traceFile = fopen("gcc.trace", "r");
     
+    // Parse command line arguments
+    parseCommandLine(argv);
+    
+    // Open trace file
+    traceFile = fopen(fileName, "r");
     if(!traceFile)
     {
         printf("ERROR: Trace file could not be opened. Please try again.\n");
@@ -108,16 +142,23 @@ int main(int argc, char* argv[])
     }
     
     
-    
-    // Parse arguments
-    numFrames = atoi(argv[2]);
-    printf("Number of Frames: %d\n",numFrames);
-    
-
-    
-   
-    
-    
+    // Call appropirate algorithm
+    if(!strcmp(algorithm,"opt"))
+    {
+        
+    }
+    else if(!strcmp(algorithm,"clock"))
+    {
+        
+    }
+    else if(!strcmp(algorithm,"aging"))
+    {
+        
+    }
+    else // algorithm = "work
+    {
+        
+    }
     
     return 0;
 }
