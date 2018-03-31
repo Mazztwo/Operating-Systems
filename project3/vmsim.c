@@ -97,6 +97,11 @@ void initFrames(struct Page frames[])
     {
         frames[i].address = 0;
         frames[i].dirty = 0;
+        
+        // Flipping the valid bit here is important. It is the main indicator that tells us
+        // whether or not a frame in memory is free. If the valid bit = 1, it means there is
+        // a valid page within the frame. If the valid bit is = 0, this means that the frame is
+        // free for use.
         frames[i].valid = 0;
         frames[i].reference = 0;
     }
@@ -120,7 +125,22 @@ void futureLocationsToEnd()
 }
 
 
+// Returns the index of the first free frame in memory frames.
+// If no free frame in memory, returns  -1.
+int freeFrameIndex(struct Page frames[])
+{
+    int i;
+    for(i = 0; i < numFrames; i++)
+    {
+        if(frames[i].valid == 0)
+            return i;
+    }
+    return -1;
+}
 
+
+// Returns the index of a specific page in the memory frames.
+// Returns the index of the page if found, or -1 if page not found.
 int pageInFrames(struct Page frames[], unsigned int page)
 {
     int i;
@@ -156,7 +176,7 @@ void opt()
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
     {
         // Print line in trace file
-        printf("%x %c\n", address, mode);
+        //printf("%x %c\n", address, mode);
         
         // First Left 20 bits are address, right 12 bits are offset
         unsigned int currPage = address & 0xfffff000;
@@ -187,6 +207,9 @@ void opt()
     
     // Reset file pointer to beginning of file
     fsetpos(traceFile, &pos);
+    //fclose(traceFile);
+    //traceFile = fopen(fileName, "r");
+    
     
     // Reset traceLocation
     traceLocation = 0;
@@ -196,6 +219,9 @@ void opt()
     futureLocationsToEnd();
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
 	{
+        
+        //printf("%x %c\n", address, mode);
+        
         // First Left 20 bits are address, right 12 bits are offset
         unsigned int currPage = address & 0xfffff000;
         int ind = currPage >> 12;
@@ -211,12 +237,12 @@ void opt()
             if(mode == 'W')
 				frames[pageIndex].dirty = 1;
                 
-			printf("%x, %c, hit\n", address, mode);
+			printf("%x, hit\n", address);
         }
         else // This means page miss (page fault)!
         {
             // Create new page to put into Frames since page fault occured. This simulates a
-            // disk read
+            // disk read.
             struct Page pageFromDisk;
             if(mode == 'W')
             {
@@ -226,13 +252,17 @@ void opt()
             {
                 pageFromDisk.dirty = 0;
             }
-            pageFromDisk.address = currPage
+            pageFromDisk.address = currPage;
+            
+            // This page is going into the frames since we have a page fault, and thus we flip
+            // the valid bit, indicating that the page is in memory.
+            pageFromDisk.valid = 1;
             
             // If there is a miss, that means that a page is NOT in the frames.
             // The first thing we must do is put the page into the frames.
             //      Case 1: We can put the page into a free frame
             //      Case 2: We must evict a page to make room for new page (page furtherst in the future)
-            
+            int freeInd = freeFrameIndex(frames);
             
             
             // Increase number of page faults for later printing
@@ -249,7 +279,6 @@ void opt()
     
     
     
-    fclose(traceFile);
     
 }
 
@@ -364,7 +393,7 @@ int main(int argc, char* argv[])
     
     // Display results
     displayResults();
-    
+    fclose(traceFile);
     return 0;
 }
 
