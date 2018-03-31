@@ -84,13 +84,14 @@ struct Page
 // Node for preprocess of OPT
 struct Node
 {
-    int index;
+    int location;
+    unsigned int pageAddr;
     struct Node *next;
     struct Node *previous;
 };
 
-// Preprocess map, one index for every memory address
-struct Node futureLocations[4294967295];
+// Preprocess map, one index for every memory address (20 bit address, 32-12bit offset)
+struct Node *futureLocations[1048575];
 
 
 
@@ -106,8 +107,22 @@ void initFrames(struct Page frames[])
     }
 }
 
-
-
+// Set the futureLocations heads to all point to the last item in each list,
+// which is the first occurance of that address in the trace. Don't have to
+// worry about losing references to rest of list because lists are doubly linked,
+// so access to other elements is done with futureLocations[i]->previous
+void futureLocationsToEnd()
+{
+    unsigned int i;
+    for(i = 0; i < 1048575; i++)
+    {
+        if(futureLocations[i] != NULL)
+        {
+            while(futureLocations[i]->next != NULL)
+                futureLocations[i] = futureLocations[i]->next;
+        }
+    }
+}
 
 
 
@@ -131,21 +146,49 @@ void opt()
     
     // Preprocess
     // Read every line in trace file, and keep reading until end of file
-    
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
     {
         // Print line in trace file
         printf("%x %c\n", address, mode);
         
-        //futureLocations[address] =
+        // First Left 20 bits are address, right 12 bits are offset
+        unsigned int currPage = address & 0xfffff000;
+        int ind = currPage >> 12;
         
-        // Read next line in trace file
-        //scan = fscanf(traceFile, "%x %c", &address, &mode);
-        memoryAccesses += 1;
+        // Initialize node to keep track of list of locations
+        struct Node *newPage = malloc(sizeof(struct Node*));
+        newPage->location = traceLocation;
+        newPage->pageAddr = currPage;
+        newPage->next = NULL;
+        newPage->previous = NULL;
+        
+        // Add the newPage to futureLocations if there doesn't exist a list yet
+        if(futureLocations[ind] == NULL)
+        {
+            futureLocations[ind] = newPage;
+        }
+        //Add  page to the head of index list if list exists
+        else
+        {
+            newPage->next = futureLocations[ind];
+            futureLocations[ind]->previous = newPage;
+            futureLocations[ind] = newPage;
+        }
+        
+        traceLocation += 1;
     }
     
     // Reset file pointer to beginning of file
     fsetpos(traceFile, &pos);
+    
+    // Reset traceLocation
+    traceLocation = 0;
+    
+    // Set list in futureLocations to point to first occurances
+    futureLocationsToEnd();
+    
+    
+    
     
     fclose(traceFile);
     
