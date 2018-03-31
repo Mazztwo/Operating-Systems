@@ -204,10 +204,46 @@ void opt()
         // is already in our "memory" frames. If it is, then it's a hit.
         int pageIndex = pageInFrames(frames,currPage);
         
+        // This means page hit!
+        if(pageIndex >= 0)
+        {
+            // If we find a page and are writing to it, we must flip the dirty bit
+            if(mode == 'W')
+				frames[pageIndex].dirty = 1;
+                
+			printf("%x, %c, hit\n", address, mode);
+        }
+        else // This means page miss (page fault)!
+        {
+            // Create new page to put into Frames since page fault occured. This simulates a
+            // disk read
+            struct Page pageFromDisk;
+            if(mode == 'W')
+            {
+                pageFromDisk.dirty = 1;
+            }
+            else
+            {
+                pageFromDisk.dirty = 0;
+            }
+            pageFromDisk.address = currPage
+            
+            // If there is a miss, that means that a page is NOT in the frames.
+            // The first thing we must do is put the page into the frames.
+            //      Case 1: We can put the page into a free frame
+            //      Case 2: We must evict a page to make room for new page (page furtherst in the future)
+            
+            
+            
+            // Increase number of page faults for later printing
+            pageFaults += 1;
+        }
 
-
-
-
+        // Increment traceLocation to next line in trace file
+        traceLocation += 1;
+        
+        // Increment number of accesses for printing later
+        memoryAccesses += 1;
 
     }
     
