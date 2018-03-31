@@ -31,11 +31,6 @@ char *fileName;
 int refr;
 int tau;
 
-// opt_preprocess
-
-
-
-
 
 
 /*
@@ -126,6 +121,18 @@ void futureLocationsToEnd()
 
 
 
+int pageInFrames(struct Page frames[], unsigned int page)
+{
+    int i;
+	for(i = 0; i < numFrames; i++)
+	{
+		if(frames[i].address == page)
+			return i;
+	}
+	return -1;
+}
+
+
 
 
 // Optimum Page Replacement Algorithm
@@ -189,6 +196,18 @@ void opt()
     futureLocationsToEnd();
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
 	{
+        // First Left 20 bits are address, right 12 bits are offset
+        unsigned int currPage = address & 0xfffff000;
+        int ind = currPage >> 12;
+
+        // Now that preprocessing is done, the first thing to be done is to see if the page from the trace
+        // is already in our "memory" frames. If it is, then it's a hit.
+        int pageIndex = pageInFrames(frames,currPage);
+        
+
+
+
+
 
     }
     
