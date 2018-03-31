@@ -185,8 +185,12 @@ void opt()
     traceLocation = 0;
     
     // Set list in futureLocations to point to first occurances
+    // Read every line in trace file, and keep reading until end of file
     futureLocationsToEnd();
-    
+    while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
+	{
+
+    }
     
     
     
