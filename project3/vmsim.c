@@ -607,14 +607,39 @@ void aging_alg()
                 
             
                 int t;
+                int next = 0;
                 
                 for(t = 0; t < numFrames; t++)
                 {
-                    if(frames)
+                    if(frames[t].agingByte > frames[next].agingByte)
                     {
-                        
+                        next = t;
                     }
+                    else if(frames[t].agingByte == frames[next].agingByte) // if age bytes are equal, evict the clean one
+                    {
+                        if(frames[t].dirty == 0)
+                        {
+                            next = t;
+                        }
+                    }
+                        
                 }
+                
+                // For clean pages, they can simply be overwritten because page in disk
+                // is the current page.
+                // For pages that have already been written to, the must be moved to disk
+                if(frames[next].dirty == 0)
+                {
+                    // No need to increment diskWrites since page on disk is most recent copy
+                    printf("%x, page fault – evict clean\n", address);
+                }
+                else
+                {
+                    printf("%x, page fault – evict dirty\n", address);
+                    diskWrites += 1;
+                }
+                
+                frames[next] = pageFromDisk;
                 
                 
             }
@@ -623,14 +648,8 @@ void aging_alg()
             pageFaults += 1;
         }
         
-        
-        
-        
-        
-        
-        
-        
         i += 1;
+        memoryAccesses += 1;
     }
     
     
