@@ -59,7 +59,7 @@ struct Node
 // Preprocess map, one index for every memory address (20 bit address, 32-12bit offset)
 struct Node *futureLocations[1048575];
 
-void initFrames(struct Page frames[])
+void initFrames(struct Page *frames)
 {
     int i;
     for(i = 0; i < numFrames; i++)
@@ -148,7 +148,9 @@ int pageInFrames(struct Page frames[], unsigned int page)
 // Optimum Page Replacement Algorithm
 void opt()
 {
-    struct Page frames[numFrames];
+    struct Page *frames = (struct Page*) malloc(sizeof(struct Page) * numFrames);
+
+    
     
     // initialize all of "memory" to empty pages
     initFrames(frames);
@@ -255,7 +257,8 @@ void opt()
             // Put page in free frame
             if(freeInd >= 0)
             {
-                frames[freeInd].address = currPage;
+                //frames[freeInd].address = currPage;
+                //frames[freeInd] = pageFromDisk;
                 printf("%x, page fault – no eviction\n", address);
             }
             else // Evict a page and then place page in evicted spot
@@ -308,6 +311,9 @@ void opt()
             
             // Increase number of page faults for later printing
             pageFaults += 1;
+            
+            // Put page in frames
+            frames[freeInd] = pageFromDisk;
         }
 
         // Increment traceLocation to next line in trace file
@@ -316,10 +322,11 @@ void opt()
         // Increment number of accesses for printing later
         memoryAccesses += 1;
 
+        
     }
     
     
-    
+    free(frames);
     
 }
 
