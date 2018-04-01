@@ -148,8 +148,7 @@ int pageInFrames(struct Page frames[], unsigned int page)
 // Optimum Page Replacement Algorithm
 void opt()
 {
-    struct Page *frames = (struct Page*) malloc(sizeof(struct Page) * numFrames);
-
+    struct Page* frames = (struct Page*) malloc(sizeof(struct Page) * numFrames);
     
     
     // initialize all of "memory" to empty pages
@@ -173,6 +172,7 @@ void opt()
         unsigned int currPage = address & 0xfffff000;
         int ind = currPage >> 12;
         
+
         // Initialize node to keep track of list of locations
         struct Node *newPage = malloc(sizeof(struct Node*));
         newPage->location = traceLocation;
@@ -270,6 +270,7 @@ void opt()
                 {
                     // Index of liked list in list of lists (from prescanning)
                     int index = frames[i].address >> 12;
+                    
                     
                     // Go through specific linked list to find furthest instance
                     while(futureLocations[index] != NULL && futureLocations[index]->location < traceLocation)
