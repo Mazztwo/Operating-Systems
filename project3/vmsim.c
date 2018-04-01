@@ -55,12 +55,13 @@ struct Node
 };
 
 
-
 // This type of page will be used for the aging algorithm
 struct AgingPage
 {
     unsigned int address;
-    char agingByte;
+    unsigned char agingByte;
+    int dirty;
+    int valid;
 };
 
 
@@ -508,17 +509,135 @@ void clock_alg()
 
 void aging_alg()
 {
+    struct AgingPage* frames = (struct AgingPage*) malloc(numFrames * sizeof(struct AgingPage));
+    
+    // Created a similar page table for the aging algorithm. This is very similar to the
+    // futureLocations table. There is an entry for each of the
+    unsigned int *aging_pt = (unsigned int*) malloc(1048575 * sizeof(unsigned int));
+    memset(aging_pt, 0, 1048575 * sizeof(unsigned int));
+    
+    
+    int i = 0;
+    int vp = 0;
+    unsigned int resetMask;
+    
+    while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
+    {
+        if(i % refr == 0)
+        {
+            // Must shift bits and take care to make sure
+            // if there are any present 1's (already referenced).
+            // If something is referenced, we have to OR it with 1 shift 7.
+            // Then flip all the reference bits.
+            int j;
+            for(j = 0; j < vp; j++)
+            {
+                frames[j].agingByte = frames[j].agingByte >> 1;
+                
+                int ref = aging_pt[frames[j].address] & 1<<22;
+                
+                if(ref)
+                {
+                    frames[j].agingByte = frames[j].agingByte | (1<<7);
+                }
+
+            }
+            // Reference bits for pages for aging
+            int u;
+            for(u = 0; u < vp; u++)
+            {
+                resetMask = 1<<22;
+                // complement the mask
+                resetMask = ~resetMask;
+                aging_pt[frames[u].address] = aging_pt[frames[u].address] & resetMask;
+            }
+        }
+        
+        // First Left 20 bits are address
+        unsigned int currPage = address & 0xfffff000;
+        
+        // First thing to be done is to see if the page from the trace
+        // is already in our "memory" frames. If it is, then it's a hit.
+        int pageIndex = pageInFrames(frames,currPage);
+        
+        if(pageIndex >= 0)
+        {
+            // Append reference bit at end of byte (left most)
+            frames[pageIndex].agingByte = frames[pageIndex].agingByte | 1<<22;
+            
+            // If we find a page and are writing to it, we must flip the dirty bit
+            if(mode == 'W')
+                frames[pageIndex].dirty = 1;
+            
+            printf("%x, hit\n", address);
+        }
+        else // must evict
+        {
+            struct AgingPage pageFromDisk;
+            if(mode == 'W')
+            {
+                pageFromDisk.dirty = 1;
+            }
+            else
+            {
+                pageFromDisk.dirty = 0;
+            }
+            pageFromDisk.address = currPage;
+            
+            // This page is going into the frames since we have a page fault, and thus we flip
+            // the valid bit, indicating that the page is in memory.
+            pageFromDisk.valid = 1;
+            
+            pageFromDisk.agingByte = 0;
+            
+            // If there is a miss, that means that a page is NOT in the frames.
+            int freeInd = freeFrameIndex(frames);
+            
+            // Put page in free frame
+            if(freeInd >= 0)
+            {
+                frames[freeInd] = pageFromDisk;
+                
+                printf("%x, page fault – no eviction\n", address);
+            }
+            else // Evict a page and then place page in evicted spot
+            {
+                // Page that has aged most will be evicted. That page will have
+                // the largest agingByte as per the aging algorithm.
+                
+            
+                int t;
+                
+                for(t = 0; t < numFrames; t++)
+                {
+                    if(frames)
+                    {
+                        
+                    }
+                }
+                
+                
+            }
+            
+            
+            pageFaults += 1;
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        i += 1;
+    }
     
     
     
     
     
-    
-    
-    
-    
-    
-    
+    free(frames);
 }
 
 
