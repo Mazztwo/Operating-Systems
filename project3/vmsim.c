@@ -33,37 +33,6 @@ int tau;
 
 
 
-/*
- # frames = max number of addresses allowed to be stored
- OPT:
- At start, we have number of frames, and a trace of memory accesses (simulating a process)
- We visit the first address in trace.
-    If it is a read, dirtyBit = 0, if write, dirtyBit = 1.
- We must then search our frames for that address
-    If page is there
-        Hit
-    If page is not there
-        Page Fault ** Evict page that is used FURTHEST in the future
-            If free frame is available
-                Page Fault - No Eviction
-            If free frame is not available
-                Page Fault - evict clean/dirty
-    Move to next line in trace
- 
- PREPROCESSING:
-    In order to know which page to evict on page fault, we must
-    know the address in currently in the frames that is used FURTHEST in the future.
-    That's the one we evict.
- 
-    To prescan:
-        At start, read in address
- 
- 
- 
- 
- 
- 
-*/
 
 
 // Create a struct that simulates a page
@@ -85,10 +54,10 @@ struct Node
     struct Node *previous;
 };
 
+
+// Preprocess
 // Preprocess map, one index for every memory address (20 bit address, 32-12bit offset)
 struct Node *futureLocations[1048575];
-
-
 
 void initFrames(struct Page frames[])
 {
@@ -111,7 +80,7 @@ void initFrames(struct Page frames[])
 // which is the first occurance of that address in the trace. Don't have to
 // worry about losing references to rest of list because lists are doubly linked,
 // so access to other elements is done with futureLocations[i]->previous
-void futureLocationsToEnd()
+void futureLocationsToEnd(struct Node *futureLocations[])
 {
     unsigned int i;
     for(i = 0; i < 1048575; i++)
@@ -153,7 +122,28 @@ int pageInFrames(struct Page frames[], unsigned int page)
 }
 
 
-
+/*
+ # frames = max number of addresses allowed to be stored
+ OPT:
+ At start, we have number of frames, and a trace of memory accesses (simulating a process)
+ We visit the first address in trace.
+ If it is a read, dirtyBit = 0, if write, dirtyBit = 1.
+ We must then search our frames for that address
+ If page is there
+    Hit
+ If page is not there
+    Page Fault ** Evict page that is used FURTHEST in the future **
+    If free frame is available
+        Page Fault - No Eviction
+    If free frame is not available
+        Page Fault - evict clean/dirty
+ Move to next line in trace
+ 
+ PREPROCESSING:
+ In order to know which page to evict on page fault, we must
+ know the address in currently in the frames that is used FURTHEST in the future.
+ That's the one we evict.
+ */
 
 // Optimum Page Replacement Algorithm
 void opt()
@@ -171,7 +161,6 @@ void opt()
     // Location of where the address is in the trace
     int traceLocation = 0;
     
-    // Preprocess
     // Read every line in trace file, and keep reading until end of file
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
     {
@@ -216,10 +205,9 @@ void opt()
     
     // Set list in futureLocations to point to first occurances
     // Read every line in trace file, and keep reading until end of file
-    futureLocationsToEnd();
+    futureLocationsToEnd(futureLocations);
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
 	{
-        
         //printf("%x %c\n", address, mode);
         
         // First Left 20 bits are address, right 12 bits are offset
@@ -264,6 +252,59 @@ void opt()
             //      Case 2: We must evict a page to make room for new page (page furtherst in the future)
             int freeInd = freeFrameIndex(frames);
             
+            // Put page in free frame
+            if(freeInd >= 0)
+            {
+                frames[freeInd].address = currPage;
+                printf("%x, page fault – no eviction\n", address);
+            }
+            else // Evict a page and then place page in evicted spot
+            {
+                int i;
+                int j = 0;
+                int k = 0;
+                for(i = 0; i < numFrames; i++)
+                {
+                    // Index of liked list in list of lists (from prescanning)
+                    int index = frames[i].address >> 12;
+                    
+                    // Go through specific linked list to find furthest instance
+                    while(futureLocations[index] != NULL && futureLocations[index]->location < traceLocation)
+                    {
+                        // Use previous here because the dubly linked list, we move
+                        // backwards from tail
+                        futureLocations[index] = futureLocations[index]->previous;
+                    }
+                    
+                    // if page is furtherst in future
+                    if(futureLocations[index]->location > k)
+                    {
+                        k = futureLocations[index]->location;
+                        j = i;
+                        
+                    }
+                    else if(futureLocations[index] == NULL) // End of list is reached, no more accesses to that page
+                    {
+                        j = i;
+                        break;
+                    }
+                    
+                    
+                }
+                
+                // Last thing to do is write to disk if the page is dirty
+                if(frames[j].dirty == 1)
+                {
+                    diskWrites += 1;
+                    printf("%x, page fault – evict dirty\n", address);
+                }
+                else // If page is clean, no need to overwrite page in disk because page in disk is most recent copy
+                {
+                    // No need to increment diskWrites since page on disk is most recent copy
+                    printf("%x, page fault – evict clean\n", address);
+                }
+
+            }
             
             // Increase number of page faults for later printing
             pageFaults += 1;
