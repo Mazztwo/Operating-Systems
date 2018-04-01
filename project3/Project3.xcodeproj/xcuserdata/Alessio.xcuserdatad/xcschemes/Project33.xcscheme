@@ -75,7 +75,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "opt"
+            argument = "clock"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

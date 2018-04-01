@@ -259,6 +259,9 @@ void opt()
             if(freeInd >= 0)
             {
                 //frames[freeInd].address = currPage;
+                
+                
+                // ?????????
                 //frames[freeInd] = pageFromDisk;
                 printf("%x, page fault – no eviction\n", address);
             }
@@ -362,17 +365,114 @@ void displayResults()
 
 
 // Clock algorithm
-void clock()
+void clock_alg()
 {
     struct Page* frames = (struct Page*) malloc(sizeof(struct Page) * numFrames);
     
     
     // initialize all of "memory" to empty pages
     initFrames(frames);
+    int traceLocation = 0;
     
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
     {
         
+        // First Left 20 bits are address
+        unsigned int currPage = address & 0xfffff000;
+        
+        // First thing to be done is to see if the page from the trace
+        // is already in our "memory" frames. If it is, then it's a hit.
+        int pageIndex = pageInFrames(frames,currPage);
+        if(pageIndex >= 0)
+        {
+            // Flip reference bit always
+            frames[pageIndex].reference = 1;
+            
+            // If we find a page and are writing to it, we must flip the dirty bit
+            if(mode == 'W')
+                frames[pageIndex].dirty = 1;
+            
+            printf("%x, hit\n", address);
+        }
+        else // must evict
+        {
+            // Create new page to put into Frames since page fault occured. This simulates a
+            // disk read.
+            struct Page pageFromDisk;
+            if(mode == 'W')
+            {
+                pageFromDisk.dirty = 1;
+            }
+            else
+            {
+                pageFromDisk.dirty = 0;
+            }
+            pageFromDisk.address = currPage;
+            pageFromDisk.reference = 1;
+            
+            // This page is going into the frames since we have a page fault, and thus we flip
+            // the valid bit, indicating that the page is in memory.
+            pageFromDisk.valid = 1;
+            
+            
+            int freeInd = freeFrameIndex(frames);
+            
+            // Put page in free frame
+            if(freeInd >= 0)
+            {
+                frames[freeInd] = pageFromDisk;
+                printf("%x, page fault – no eviction\n", address);
+            }
+            else // Evict a page and then place page in evicted spot
+            {
+                int toMove = 0;
+                while(toMove == 0)
+                {
+                    // Look for any pages that have not yet been referenced.
+                    // This will indiciate that the page has been found
+                    if(frames[traceLocation].reference == 0)
+                    {
+                        toMove = 1;
+                    }
+                    
+                    // Whenver a page has a 1 as a reference bit, this means that we can flip the bit
+                    // and continue moving around the clock. If we get to this page again, then we can evict it
+                    if(toMove == 0)
+                    {
+                        frames[traceLocation].reference = 0;
+                        traceLocation = (1+traceLocation) % numFrames;
+                    }
+                }
+                
+                
+                // For clean pages, they can simply be overwritten because page in disk
+                // is the current page.
+                // For pages that have already been written to, the must be moved to disk
+                if(frames[traceLocation].dirty == 0)
+                {
+                    // No need to increment diskWrites since page on disk is most recent copy
+                    printf("%x, page fault – evict clean\n", address);
+                }
+                else
+                {
+                    printf("%x, page fault – evict dirty\n", address);
+                    diskWrites += 1;
+                }
+                
+                
+                
+                
+                // Add page to frame
+                frames[traceLocation] = pageFromDisk;
+                traceLocation = (1+traceLocation) % numFrames;
+                
+            }
+            
+            
+            pageFaults += 1;
+        }
+        
+        memoryAccesses += 1;
     }
     
     
@@ -412,14 +512,7 @@ void parseCommandLine(char* argv[])
             fileName = argv[7];
         }
     }
-    
-    printf("Trace file name: %s\n", fileName);
 }
-
-
-
-
-
 
 
 
@@ -454,7 +547,7 @@ int main(int argc, char* argv[])
     }
     else if(!strcmp(algorithm,"clock"))
     {
-        
+        clock_alg();
     }
     else if(!strcmp(algorithm,"aging"))
     {
