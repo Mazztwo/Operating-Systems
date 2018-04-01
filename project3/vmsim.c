@@ -82,7 +82,7 @@ void initFrames(struct Page *frames)
 // so access to other elements is done with futureLocations[i]->previous
 void futureLocationsToEnd(struct Node *futureLocations[])
 {
-    unsigned int i;
+    int i;
     for(i = 0; i < 1048575; i++)
     {
         if(futureLocations[i] != NULL)
@@ -172,10 +172,6 @@ void opt()
         unsigned int currPage = address & 0xfffff000;
         int ind = currPage >> 12;
         
-        if(traceLocation == 1187)
-        {
-            printf("here\n");
-        }
         
 
         // Initialize node to keep track of list of locations
@@ -213,13 +209,13 @@ void opt()
     // Set list in futureLocations to point to first occurances
     // Read every line in trace file, and keep reading until end of file
     futureLocationsToEnd(futureLocations);
+    
     while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
 	{
         //printf("%x %c\n", address, mode);
         
-        // First Left 20 bits are address, right 12 bits are offset
+        // First Left 20 bits are address
         unsigned int currPage = address & 0xfffff000;
-        int ind = currPage >> 12;
 
         // Now that preprocessing is done, the first thing to be done is to see if the page from the trace
         // is already in our "memory" frames. If it is, then it's a hit.
@@ -312,6 +308,9 @@ void opt()
                     // No need to increment diskWrites since page on disk is most recent copy
                     printf("%x, page fault – evict clean\n", address);
                 }
+                
+                // Put page in frames
+                //frames[freeInd] = pageFromDisk;
 
             }
             
@@ -327,7 +326,8 @@ void opt()
         
         // Increment number of accesses for printing later
         memoryAccesses += 1;
-
+        
+        
         
     }
     
@@ -335,6 +335,10 @@ void opt()
     free(frames);
     
 }
+
+
+
+
 
 
 
@@ -355,6 +359,27 @@ void displayResults()
 
 
 
+
+
+// Clock algorithm
+void clock()
+{
+    struct Page* frames = (struct Page*) malloc(sizeof(struct Page) * numFrames);
+    
+    
+    // initialize all of "memory" to empty pages
+    initFrames(frames);
+    
+    while(fscanf(traceFile, "%x %c", &address, &mode) != EOF)
+    {
+        
+    }
+    
+    
+    
+    free(frames);
+    
+}
 
 
 
@@ -390,10 +415,6 @@ void parseCommandLine(char* argv[])
     
     printf("Trace file name: %s\n", fileName);
 }
-
-
-
-
 
 
 
