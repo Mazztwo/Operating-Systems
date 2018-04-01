@@ -55,6 +55,15 @@ struct Node
 };
 
 
+
+// This type of page will be used for the aging algorithm
+struct AgingPage
+{
+    unsigned int address;
+    char agingByte;
+};
+
+
 // Preprocess
 // Preprocess map, one index for every memory address (20 bit address, 32-12bit offset)
 struct Node *futureLocations[1048575];
@@ -488,6 +497,52 @@ void clock_alg()
 
 
 
+
+
+
+
+
+
+
+
+
+void aging_alg()
+{
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Parses command line arguments
 void parseCommandLine(char* argv[])
 {
@@ -551,7 +606,7 @@ int main(int argc, char* argv[])
     }
     else if(!strcmp(algorithm,"aging"))
     {
-        
+        aging_alg();
     }
     else // algorithm = "work
     {
