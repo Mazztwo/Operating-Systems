@@ -172,6 +172,11 @@ void opt()
         unsigned int currPage = address & 0xfffff000;
         int ind = currPage >> 12;
         
+        if(traceLocation == 1187)
+        {
+            printf("here\n");
+        }
+        
 
         // Initialize node to keep track of list of locations
         struct Node *newPage = malloc(sizeof(struct Node*));
