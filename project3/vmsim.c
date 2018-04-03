@@ -32,9 +32,6 @@ int refr;
 int tau;
 
 
-
-
-
 // Create a struct that simulates a page
 struct Page
 {
@@ -344,32 +341,9 @@ void opt()
         
     }
     
-    
     free(frames);
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-void displayResults()
-{
-    printf("\n%s\n", algorithm);
-    printf("Number of frames:        %d\n",numFrames);
-    printf("Total memory accesses:   %d\n", memoryAccesses);
-    printf("Total page faults:       %d\n", pageFaults);
-    printf("Total writes to disk:    %d\n\n", diskWrites);
-}
-
 
 
 
@@ -470,8 +444,6 @@ void clock_alg()
                 }
                 
                 
-                
-                
                 // Add page to frame
                 frames[traceLocation] = pageFromDisk;
                 traceLocation = (1+traceLocation) % numFrames;
@@ -490,21 +462,6 @@ void clock_alg()
     free(frames);
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void aging_alg()
@@ -534,7 +491,7 @@ void aging_alg()
             {
                 frames[j].agingByte = frames[j].agingByte >> 1;
                 
-                int ref = aging_pt[frames[j].address] & 1<<22;
+                int ref = aging_pt[frames[j].address] & 1<<7;
                 
                 if(ref)
                 {
@@ -546,7 +503,7 @@ void aging_alg()
             int u;
             for(u = 0; u < vp; u++)
             {
-                resetMask = 1<<22;
+                resetMask = 1<<7;
                 // complement the mask
                 resetMask = ~resetMask;
                 aging_pt[frames[u].address] = aging_pt[frames[u].address] & resetMask;
@@ -563,7 +520,7 @@ void aging_alg()
         if(pageIndex >= 0)
         {
             // Append reference bit at end of byte (left most)
-            frames[pageIndex].agingByte = frames[pageIndex].agingByte | 1<<22;
+            frames[pageIndex].agingByte = frames[pageIndex].agingByte | 1<<7;
             
             // If we find a page and are writing to it, we must flip the dirty bit
             if(mode == 'W')
@@ -712,7 +669,14 @@ void parseCommandLine(char* argv[])
 
 
 
-
+void displayResults()
+{
+    printf("\n%s\n", algorithm);
+    printf("Number of frames:        %d\n",numFrames);
+    printf("Total memory accesses:   %d\n", memoryAccesses);
+    printf("Total page faults:       %d\n", pageFaults);
+    printf("Total writes to disk:    %d\n\n", diskWrites);
+}
 
 
 

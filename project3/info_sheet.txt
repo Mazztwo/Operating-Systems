@@ -16,22 +16,24 @@ Assignment #:  3
 
 Program due date:  4/4/2018
 
-Handed in date:  
+Handed in date:  4/2/2018
 
 Source code file name(s):
 
+vmsim.c
 
 
 Other file name(s) (if relevant):
 
+makefile
 
 
-
-Does your program run without error?: Yes
+Does your program run without error?: No
 
 If not, what is/are the error(s) and which parts of your program run
 correctly?:
 
-Additional comments to the grader:
+The clock algorithm works correctly. OPT seg-faults some times, so either try again with a different file or change number of frames. Changing Aging algorithm refresh rate doesn't seem to change the results of the algorithm.
 
+Additional comments to the grader:
 
