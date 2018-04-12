@@ -11,6 +11,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 //size of a disk block
 #define	BLOCK_SIZE 512
@@ -102,18 +103,26 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
 	memset(stbuf, 0, sizeof(struct stat));
+    
+    // Pointer to start of disk. Open in read, binary mode.
+    FILE *disk = fopen(".disk", "rb");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        return-ENOENT;
+    }
    
     // Declare each of the three pieces. We are using 8.3 scheme,
     // which means file names and directories are in 8.3 format.
-    // Leave one char for /n, so technically 9.4.
+    // Leave one char for \0, so technically 9.4!
     char *filename = malloc(9);
     char *extension = malloc(4);
     char *directory = malloc(9);
     
-    // Split path into filename, extension, directory
-    int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
     
-	//is path the root dir?
+	// is path the root dir?
 	if (strcmp(path, "/") == 0)
     {
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -121,26 +130,52 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 	}
     else
     {
+        // Split path into filename, extension, directory
+        int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
         
         // There are three cases we are concerned with in terms of the
         // return value of sscanf(path). The return value tells us the number
         // of variables that the function has filled. So, if everything is
-        // correct in the path, the return value can be 1,2, or 3. Every path
+        // correct in the path, the return value can be -0,1,2, or 3. Every path
         // should include at least a directory, so numVarsFilled should at
-        // least always be 1. If path points to a directory, then numVarsFilled
+        // least always be 1 (unless error). If path points to a directory, then numVarsFilled
         // = 1. If path points to a filename, then numVarsFilled = 3, because
-        // 1 directory + 1 file name + 1 extension.
+        // 1 directory + 1 file name + 1 extension since every filename has
         
+        // an extension in our 8.3 scheme.
         
         // Case 1: path points to a directory
         if(numVarsFilled == 1)
         {
-            /*
-             //Might want to return a structure with these fields
-             stbuf->st_mode = S_IFDIR | 0755;
-             stbuf->st_nlink = 2;
-             res = 0; //no error
-             */
+            // We must see if the directory pointed to by path
+            // exists in our file system. Since we are guaranteed a
+            // two tier system, we can start from root and work down. This
+            // is because only root has subdirectories, and subdirectories
+            // only contain files, as per the project specifications.
+            
+            // Make sure to seek to beginning of disk to start search!
+            fseek(disk, 0, SEEK_SET);
+            cs1550_root_directory root;
+            fread(&root, BLOCK_SIZE, 1, disk);
+            
+            // Scan blocks in .disk to see if entry exists
+            int i;
+            for(i = 0; i < root.nDirectories; i++)
+            {
+                if( strcmp(directory, root.directories[i].dname) == 0 )
+                {
+                     //Might want to return a structure with these fields
+                     stbuf->st_mode = S_IFDIR | 0755;
+                     stbuf->st_nlink = 2;
+                     res = 0; //no error
+                    break;
+                }
+                else
+                {
+                    // directory not found
+                    res = -ENOENT;
+                }
+            }
         }
         // Case 2: path points to a file
         else if(numVarsFilled == 3)
@@ -164,6 +199,15 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
         }
 
 	}
+    
+    
+    // DONT FORGET TO FREE MALLOC'D PIECES (filename, directory, extension)
+    // DONT FORGET TO CLOSE DISK FILE
+    free(filename);
+    free(extension);
+    free(directory);
+    fclose(disk);
+    
 	return res;
 }
 
