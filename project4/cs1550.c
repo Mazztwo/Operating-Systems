@@ -111,14 +111,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     char *directory = malloc(9);
     
     // Split path into filename, extension, directory
-    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
-    
-    
-    
-    
-    
-    
-    
+    int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
     
 	//is path the root dir?
 	if (strcmp(path, "/") == 0)
@@ -128,26 +121,48 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 	}
     else
     {
+        
+        // There are three cases we are concerned with in terms of the
+        // return value of sscanf(path). The return value tells us the number
+        // of variables that the function has filled. So, if everything is
+        // correct in the path, the return value can be 1,2, or 3. Every path
+        // should include at least a directory, so numVarsFilled should at
+        // least always be 1. If path points to a directory, then numVarsFilled
+        // = 1. If path points to a filename, then numVarsFilled = 3, because
+        // 1 directory + 1 file name + 1 extension.
+        
+        
+        // Case 1: path points to a directory
+        if(numVarsFilled == 1)
+        {
+            /*
+             //Might want to return a structure with these fields
+             stbuf->st_mode = S_IFDIR | 0755;
+             stbuf->st_nlink = 2;
+             res = 0; //no error
+             */
+        }
+        // Case 2: path points to a file
+        else if(numVarsFilled == 3)
+        {
+            
+            //Check if name is a regular file
+            /*
+             //regular file, probably want to be read and write
+             stbuf->st_mode = S_IFREG | 0666;
+             stbuf->st_nlink = 1; //file links
+             stbuf->st_size = 0; //file size - make sure you replace with real size!
+             res = 0; // no error
+             */
+            
+        }
+        // Case 3: "In the case of an input failure before any data could be successfully interpreted, EOF is returned." Also, if no variables
+        // could be filled, then this is also an error.
+        else if(numVarsFilled == EOF || numVarsFilled == 0)
+        {
+                res = -ENOENT;
+        }
 
-	//Check if name is subdirectory
-	/* 
-		//Might want to return a structure with these fields
-		stbuf->st_mode = S_IFDIR | 0755;
-		stbuf->st_nlink = 2;
-		res = 0; //no error
-	*/
-
-	//Check if name is a regular file
-	/*
-		//regular file, probably want to be read and write
-		stbuf->st_mode = S_IFREG | 0666; 
-		stbuf->st_nlink = 1; //file links
-		stbuf->st_size = 0; //file size - make sure you replace with real size!
-		res = 0; // no error
-	*/
-
-		//Else return that path doesn't exist
-		res = -ENOENT;
 	}
 	return res;
 }
@@ -211,6 +226,10 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	(void) mode;
 	(void) dev;
+    
+    
+    // Remove later:
+    (void) path;
 	return 0;
 }
 
