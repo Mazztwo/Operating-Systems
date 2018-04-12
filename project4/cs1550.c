@@ -79,6 +79,19 @@ struct cs1550_disk_block
 
 typedef struct cs1550_disk_block cs1550_disk_block;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  * Called whenever the system wants to know the file attributes, including
  * simply whether the file exists or not. 
@@ -88,9 +101,25 @@ typedef struct cs1550_disk_block cs1550_disk_block;
 static int cs1550_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
-
 	memset(stbuf, 0, sizeof(struct stat));
    
+    // Declare each of the three pieces. We are using 8.3 scheme,
+    // which means file names and directories are in 8.3 format.
+    // Leave one char for /n, so technically 9.4.
+    char *filename = malloc(9);
+    char *extension = malloc(4);
+    char *directory = malloc(9);
+    
+    // Split path into filename, extension, directory
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    
+    
+    
+    
+    
+    
+    
+    
 	//is path the root dir?
 	if (strcmp(path, "/") == 0)
     {
