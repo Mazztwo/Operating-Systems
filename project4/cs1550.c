@@ -178,8 +178,47 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             }
         }
         // Case 2: path points to a file
-        else if(numVarsFilled == 3)
+        // Changed from numVarsFilled == 3 to >= 2 because there is
+        // a chance that a file may not have an extension.
+        else if(numVarsFilled  >= 2)
         {
+            // If a file is found, we must find the block that
+            // the file starts at. Start by finding the block
+            // where the directory is located.
+            fseek(disk, 0, SEEK_SET);
+            cs1550_root_directory root;
+            fread(&root, BLOCK_SIZE, 1, disk);
+            
+            // Scan blocks in .disk to see if entry exists
+            int i;
+            
+            // Initialize where directoryBlock is.
+            // directoryBlock will hold the offset from root.
+            // Initialized to -11 because 11 is my favorite number.
+            long directoryBlock = -11;
+            
+            for(i = 0; i < root.nDirectories; i++)
+            {
+                if( strcmp(directory, root.directories[i].dname) == 0 )
+                {
+                    directoryBlock = root.directories[i].nStartBlock;
+                }
+                else
+                {
+                    // directory not found
+                    res = -ENOENT;
+                }
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             //Check if name is a regular file
             /*
