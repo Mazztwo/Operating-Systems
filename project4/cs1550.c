@@ -210,25 +210,67 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
                 }
             }
             
+            // Directory not found
+            if(directoryBlock == -11)
+            {
+                free(filename);
+                free(extension);
+                free(directory);
+                fclose(disk);
+                return -ENOENT;
+            }
             
+            // Move disk pointer to the start location of the directory block
+            fseek(disk, BLOCK_SIZE*directoryBlock, SEEK_SET);
             
+            // Create a directory entry
+            cs1550_directory_entry entry;
+            fread(&entry, BLOCK_SIZE, 1, disk);
             
+            // We must now scan through the files to see if the file
+            // found in our path exists in this directory. This is very
+            // similar to how we found our directory from root.
             
+            long startOfFile = -11;
             
+            for(i = 0; i < entry.nFiles; i++)
+            {
+                /*
+                 FILES[]
+                 char fname[MAX_FILENAME + 1];    //filename (plus space for nul)
+                 char fext[MAX_EXTENSION + 1];    //extension (plus space for nul)
+                 size_t fsize;                    //file size
+                 long nStartBlock;
+                */
+                
+                // compare filename to path/filename
+                // compare extension to path/filename.extension
+                if(strcmp(filename, entry.files[i].fname) == 0)
+                {
+                    if(strcmp(extension, entry.files[i].fext) == 0)
+                    {
+                        startOfFile = entry.files[i].nStartBlock;
+                    }
+                }
+            }
             
-            
-            
-            
-            
-            //Check if name is a regular file
-            /*
-             //regular file, probably want to be read and write
-             stbuf->st_mode = S_IFREG | 0666;
-             stbuf->st_nlink = 1; //file links
-             stbuf->st_size = 0; //file size - make sure you replace with real size!
-             res = 0; // no error
-             */
-            
+            // File was not found scaning directory
+            if(startOfFile == -11)
+            {
+                res = -ENOENT;
+            }
+            // File was found in directory
+            else
+            {
+                
+                //regular file, probably want to be read and write
+                stbuf->st_mode = S_IFREG | 0666;
+                stbuf->st_nlink = 1; //file links
+                stbuf->st_size = entry.files[startOfFile].fsize; //file size - make sure you replace with real size!
+                res = 0; // no error
+                
+            }
+                       
         }
         // Case 3: "In the case of an input failure before any data could be successfully interpreted, EOF is returned." Also, if no variables
         // could be filled, then this is also an error.
