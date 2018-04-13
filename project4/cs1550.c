@@ -81,18 +81,6 @@ struct cs1550_disk_block
 typedef struct cs1550_disk_block cs1550_disk_block;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*
  * Called whenever the system wants to know the file attributes, including
  * simply whether the file exists or not. 
@@ -104,8 +92,8 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 	int res = 0;
 	memset(stbuf, 0, sizeof(struct stat));
     
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "rb");
+    // Pointer to start of disk. Open in read/write, binary mode.
+    FILE *disk = fopen(".disk", "r+b");
     
     // If there is an issue with disk, return ENOENT
     if(disk == NULL)
@@ -117,9 +105,9 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     // Declare each of the three pieces. We are using 8.3 scheme,
     // which means file names and directories are in 8.3 format.
     // Leave one char for \0, so technically 9.4!
-    char *filename = malloc(9);
-    char *extension = malloc(4);
-    char *directory = malloc(9);
+    char *filename = calloc(9, sizeof(char));
+    char *extension = calloc(4, sizeof(char));
+    char *directory = calloc(9, sizeof(char));
     
     
 	// is path the root dir?
@@ -235,14 +223,6 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             
             for(i = 0; i < entry.nFiles; i++)
             {
-                /*
-                 FILES[]
-                 char fname[MAX_FILENAME + 1];    //filename (plus space for nul)
-                 char fext[MAX_EXTENSION + 1];    //extension (plus space for nul)
-                 size_t fsize;                    //file size
-                 long nStartBlock;
-                */
-                
                 // compare filename to path/filename
                 // compare extension to path/filename.extension
                 if(strcmp(filename, entry.files[i].fname) == 0)
@@ -311,8 +291,8 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	//the filler function allows us to add entries to the listing
 	//read the fuse.h file for a description (in the ../include dir)
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
+	//filler(buf, ".", NULL, 0);
+	//filler(buf, "..", NULL, 0);
 
 	/*
 	//add the user stuff (subdirs or files)
@@ -322,17 +302,146 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
+
+
+
+
+
+
+
+
+
 /* 
  * Creates a directory. We can ignore mode since we're not dealing with
  * permissions, as long as getattr returns appropriate ones for us.
  */
 static int cs1550_mkdir(const char *path, mode_t mode)
 {
-	(void) path;
 	(void) mode;
 
+    
+    // Pointer to start of disk. Open in read, binary mode.
+    FILE *disk = fopen(".disk", "rb");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        return-ENOENT;
+    }
+    
+    // Declare each of the three pieces. We are using 8.3 scheme,
+    // which means file names and directories are in 8.3 format.
+    // Leave one char for \0, so technically 9.4!
+    char *filename = calloc(9, sizeof(char));
+    char *extension = calloc(4, sizeof(char));
+    char *directory = calloc(9, sizeof(char));
+    
+    
+    // Split path into filename, extension, directory
+    int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    
+    /*
+     
+     Return values:
+     
+     0 on success
+     ENAMETOOLONG if the name is beyond 8 chars
+     EPERM if the directory is not under the root dir only
+     EEXIST if the directory already exists
+     
+     */
+    
+    // First we can check if the directory name is longer than 8 characters
+    if(strlen(directory) > 8)
+    {
+        return -ENAMETOOLONG;
+    }
+    // Check if just root is given
+    else if(strcmp(path, "/") == 0)
+    {
+        return -EEXIST;
+    }
+    // If there is more than 1 variable filled by sscanf, user trying to make
+    // a new directory outside of root which goes against project speficications
+    else if(numVarsFilled > 1)
+    {
+        return -EPERM;
+    }
+    // Make sure we weren't given just / as a directory
+    else if(filename[0] == '/')
+    {
+        return -EPERM;
+    }
+    // Directory name is valid, no filename or extension given. From above else if
+    // we can see that numVarsFilled is not greater than 1, which means no file name
+    // was given.
+    else if(directory[0] != 0)
+    {
+        // First let's check to make sure that the directory doesn't already exist
+        // in our file system.
+        // Make sure to seek to beginning of disk to start search!
+        fseek(disk, 0, SEEK_SET);
+        cs1550_root_directory root;
+        fread(&root, BLOCK_SIZE, 1, disk);
+        
+        int numDirectories = root.nDirectories;
+        
+        // Scan blocks in .disk to see if entry exists
+        int i;
+        for(i = 0; i < numDirectories; i++)
+        {
+            if( strcmp(directory, root.directories[i].dname) == 0 )
+            {
+                return -EEXIST;
+            }
+        }
+        
+        
+        // If we are here, then directory does not exist, so we must
+        // update the root block with new entry information
+        strcpy(root.directories[numDirectories].dname, directory);
+        root.directories[numDirectories].nStartBlock = ???
+        root.nDirectories += 1;
+        
+        // Update root block
+        fseek(disk, 0, SEEK_SET);
+        fwrite(&root, BLOCK_SIZE, 1, disk)
+        
+        // We must write the new entry at the appropirate block in disk
+        // Create entry to store in disk
+        cs1550_directory_entry entry;
+        
+        // Move disk pointer to the start location of the directory block
+        fseek(disk, BLOCK_SIZE * ??? , SEEK_SET);
+        fwrite(&entry, BLOCK_SIZE, 1, disk);
+        
+        
+        
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // DON'T FORGET TO FREE ALL CALLOC'D MEMORY
+    // AND CLOSE ALL FILES!
+    
+    
 	return 0;
 }
+
+
+
+
+
+
 
 /* 
  * Removes a directory.
