@@ -134,9 +134,76 @@ static int getDirIndex(char *directory)
     return ind;
 }
 
-static int getFileIndex(int dirIndex,char *filename)
+static int getFileIndex(int dirIndex,char *filename, size_t *fileSize)
 {
+    int ind = -1;
     
+    // Pointer to start of disk. Open in read, binary mode.
+    FILE *disk = fopen(".disk", "rb");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        printf("ERROR OPENING DISK\n");
+        return-ENOENT;
+    }
+    
+    // Make sure to seek to beginning of disk to start search!
+    fseek(disk, 0, SEEK_SET);
+    cs1550_root_directory root;
+    int er = fread(&root, BLOCK_SIZE, 1, disk);
+    
+    if(er != 1)
+    {
+        fclose(disk);
+        printf("COULD NOT READ ROOT\n");
+        return-ENOENT;
+    }
+    else if(root.directories == NULL)
+    {
+        fclose(disk);
+        printf("ROOT DIRECTORIES[] == NULL\n");
+        return-ENOENT;
+    }
+    
+    
+    // Go to block location. Get start block of directory file is in!
+    fseek(disk, root.directories[dirIndex].nStartBlock * BLOCK_SIZE, SEEK_SET);
+    
+    // Read block from disk
+    cs1550_directory_entry  entry;
+    int res = fread(&entry, BLOCK_SIZE, 1, disk);
+    
+    if(res != 1)
+    {
+        fclose(disk);
+        printf("COULD NOT READ DIRECTORY FROM DISK\n");
+        return-ENOENT;
+    }
+    else if(entry.files == NULL)
+    {
+        fclose(disk);
+        printf("DIRECTORY FILES[] == NULL\n");
+        return-ENOENT;
+    }
+    
+    int i;
+    for(i = 0; i < entry.nFiles; i++)
+    {
+        // compare filename to path/filename
+        if(strcmp(filename, entry.files[i].fname) == 0)
+        {
+            ind = i;
+            *fileSize = entry.files[i].fsize;
+        }
+        
+    }
+    
+    
+    // DONT FORGET TO CLOSE DISK!
+    fclose(disk);
+    return ind;
 }
 
 
@@ -183,7 +250,8 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     else
     {
         // Split path into filename, extension, directory
-        int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+        //int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+        sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
 /* Scrapping this scheme as I couldn't get it to work.
 May be useful later.
         // There are three cases we are concerned with in terms of the
@@ -202,6 +270,7 @@ May be useful later.
         
         if(dirIndex == -1)
         {
+            printf("ERROR FINDING DIRECTORY.");
             return -ENOENT;
         }
         
@@ -256,8 +325,24 @@ May be useful later.
         {
             printf("Path indicated file within valid subdirectory.\n");
             
-            int fileIndex = getFileIndex(dirIndex,filename);
+            // Pass pointer of file size to fileIndex so we can
+            // trick the funciton into giving us two return values.
+            size_t fileSize = 0;
+            int fileIndex = getFileIndex(dirIndex,filename, &fileSize);
+            printf("Location of file: %d\n", fileIndex);
             
+            if(fileIndex == -1)
+            {
+                printf("ERROR FINDING FILE IN VALID DIRECTORY.");
+                return -ENOENT;
+            }
+            
+            //regular file, probably want to be read and write
+            stbuf->st_mode = S_IFREG | 0666;
+            stbuf->st_nlink = 1; //file links
+            stbuf->st_size = fileSize; //file size - make sure you replace with real size!
+            res = 0; // no error
+        
             /*
             // If a file is found, we must find the block that
             // the file starts at. Start by finding the block
@@ -357,7 +442,7 @@ May be useful later.
     //free(filename);
     //free(extension);
     //free(directory);
-    fclose(disk);
+    //fclose(disk);
     
 	return res;
 }
