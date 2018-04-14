@@ -82,10 +82,7 @@ typedef struct cs1550_disk_block cs1550_disk_block;
 
 
 
-
-
-
-
+// Gets directory index in disk
 static int getDirIndex(char *directory)
 {
     int ind = -1;
@@ -134,6 +131,9 @@ static int getDirIndex(char *directory)
     return ind;
 }
 
+
+
+// Gets file index in disk
 static int getFileIndex(int dirIndex,char *filename, size_t *fileSize)
 {
     int ind = -1;
@@ -205,6 +205,115 @@ static int getFileIndex(int dirIndex,char *filename, size_t *fileSize)
     fclose(disk);
     return ind;
 }
+
+
+
+// Checks if number of directories is under limit
+static int checkNumDirectories()
+{
+    int res = -1;
+    // Pointer to start of disk. Open in read, binary mode.
+    FILE *disk = fopen(".disk", "rb");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        printf("ERROR OPENING DISK\n");
+        return-ENOENT;
+    }
+    
+    // Make sure to seek to beginning of disk to start search!
+    fseek(disk, 0, SEEK_SET);
+    cs1550_root_directory root;
+    int er = fread(&root, BLOCK_SIZE, 1, disk);
+    
+    if(er <= 1)
+    {
+        fclose(disk);
+        printf("COULD NOT READ ROOT\n");
+        return-ENOENT;
+    }
+    
+    // Means we are good to create another directory
+    if(root.nDirectories < MAX_DIRS_IN_ROOT)
+    {
+        res = 1;
+    }
+    
+    fclose(disk);
+    return res;
+}
+
+
+// Finds free block in bitmap used to store usage
+static long getFreeBlock()
+{
+    int res = -1;
+    // Pointer to start of disk. Open in read/write, binary mode.
+    FILE *disk = fopen(".disk", "r+b");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        printf("ERROR OPENING DISK\n");
+        return-ENOENT;
+    }
+    
+    // grab bitmap from last few blocks of disk
+    unsigned char map[3*BLOCK_SIZE];
+    
+    
+}
+
+
+// Creates a new directory and places it in the correct block on disk
+static int createNewDir(char *directory)
+{
+    int res = -1;
+    int freeBlock = -1;
+    // Pointer to start of disk. Open in read, binary mode.
+    FILE *disk = fopen(".disk", "rb");
+    
+    // If there is an issue with disk, return ENOENT
+    if(disk == NULL)
+    {
+        fclose(disk);
+        printf("ERROR OPENING DISK\n");
+        return-ENOENT;
+    }
+    
+    // Make sure to seek to beginning of disk to start search!
+    fseek(disk, 0, SEEK_SET);
+    cs1550_root_directory root;
+    int er = fread(&root, BLOCK_SIZE, 1, disk);
+    
+    if(er <= 1)
+    {
+        fclose(disk);
+        printf("COULD NOT READ ROOT\n");
+        return-ENOENT;
+    }
+    
+    // Find first free block
+    int i;
+    for(i = 0; i < MAX_DIRS_IN_ROOT; i++)
+    {
+        // Find first free directory
+        if(root.directories[i].dname == 0 || root.directories[i].dname == '\0')
+        {
+            strcpy(root.directories[i].dname, directory);
+            freeBlock = getFreeBlock();
+            break;
+        }
+    }
+    
+    
+    
+}
+
+
 
 
 
@@ -599,6 +708,16 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     // in root is not over the maximum number of directories allowed by our disk.
     printf("DIRECTORY DOES NOT EXIST. ATTEMPTING TO CREATE.\n");
     
+    // Reached capacity for number of directories
+    if(checkNumDirectories() == -1)
+    {
+        printf("CANNOT CREATE ANY MORE DIRECTORIES. CAPACITY REACHED.\n");
+        return -1;
+    }
+    
+    // If we are here, it means that our directory does not exist AND
+    // we have space in root to create a new directory.
+    createNewDir(directory);
     
     
      
