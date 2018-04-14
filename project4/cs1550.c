@@ -110,19 +110,25 @@ static int getDirIndex(char *directory)
         return-ENOENT;
     }
     
-    char *dirname = "";
- 
+
+    
+    
     int i;
     for(i = 0; i < MAX_DIRS_IN_ROOT; i++)
     {
+        char *dirname = "";
         if(root.directories != NULL)
         {
             dirname = root.directories[i].dname;
         }
         
+        printf("Checking if %s = %s\n", dirname, directory);
+        
         if( strcmp(directory, dirname) == 0 )
         {
-            ind = i;
+            printf("Found a match! %s = %s\n", dirname, directory);
+            fclose(disk);
+            return i;
         }
     }
     
@@ -209,7 +215,7 @@ static int getFileIndex(int dirIndex,char *filename, size_t *fileSize)
 
 
 // Checks if number of directories is under limit
-static int checkNumDirectories()
+static int checkNumDirectories(void)
 {
     int res = -1;
     // Pointer to start of disk. Open in read, binary mode.
@@ -247,9 +253,11 @@ static int checkNumDirectories()
 
 
 // Finds free block in bitmap used to store usage
-static long getFreeBlock()
+static long getFreeBlock(FILE *disk)
 {
-    int res = -1;
+    long res = -1;
+    long location;
+    /*
     // Pointer to start of disk. Open in read/write, binary mode.
     FILE *disk = fopen(".disk", "r+b");
     
@@ -260,21 +268,69 @@ static long getFreeBlock()
         printf("ERROR OPENING DISK\n");
         return-ENOENT;
     }
+    */
+    
+    int mapSize = 3*BLOCK_SIZE;
+    fseek(disk, 0, SEEK_SET);
     
     // grab bitmap from last few blocks of disk
-    unsigned char map[3*BLOCK_SIZE];
+    unsigned char map[mapSize];
+    int x = fread(map,mapSize,1,disk);
+    if(x < 0)
+    {
+        printf("COULD NOT READ BITMAP FROM END OF DISK.\n");
+        return -1;
+    }
     
+    // Bitmap is three blocks from end disk
+    x =fseek(disk, -mapSize, SEEK_END);
+    if(x < 0)
+    {
+        printf("COULD NOT SEEK TO START OF BITMAP.\n");
+        return -1;
+    }
+    
+    // Find byte
+    for(location = 0; location < mapSize; location++)
+    {
+        // Find next 0 "free" bit
+        unsigned char check = 1;
+        unsigned char isZero;
+        int k;
+        for(k = 0; k < 8; k++)
+        {
+            isZero = map[location]&check;
+            // Found 0
+            if(!isZero)
+            {
+                // Flip found bit to 1
+                map[location] |= check;
+                
+                // Update map
+                fwrite(map, mapSize, 1, disk);
+                
+                // Block is the byte plus the offset
+                res = (location*8)+k+1;
+                return res;
+            }
+            
+            // Shift bit over
+            check = check<<1;
+        }
+    }
+    
+    return -1;
     
 }
 
 
-// Creates a new directory and places it in the correct block on disk
+// Creates a new directory
 static int createNewDir(char *directory)
 {
-    int res = -1;
-    int freeBlock = -1;
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "rb");
+    int res = 1;
+    long freeBlock = -1;
+    // Pointer to start of disk. Open in read/write, binary mode.
+    FILE *disk = fopen(".disk", "r+b");
     
     // If there is an issue with disk, return ENOENT
     if(disk == NULL)
@@ -304,13 +360,39 @@ static int createNewDir(char *directory)
         if(root.directories[i].dname == 0 || root.directories[i].dname == '\0')
         {
             strcpy(root.directories[i].dname, directory);
-            freeBlock = getFreeBlock();
+            freeBlock = getFreeBlock(disk);
+            if(freeBlock == -1 )
+            {
+                printf("NO FREE BLOCK FOUND IN BITMAP.\n");
+                fclose(disk);
+                return -1;
+            }
+            // update root
+            root.directories[i].nStartBlock = freeBlock;
             break;
         }
     }
     
+    // Go back to start of disk
+    fseek(disk, 0, SEEK_SET);
     
+    // Create new directory
+    cs1550_directory_entry entry;
+    entry.nFiles = 0;
     
+    // Go to free block location
+    fseek(disk, freeBlock*BLOCK_SIZE, SEEK_SET);
+    
+    // Write new entry
+    fwrite((void*) &entry, BLOCK_SIZE, 1, disk);
+    
+    // Overwrite root
+    fseek(disk, 0, SEEK_SET);
+    fwrite((void*) &root, BLOCK_SIZE, 1, disk);
+    
+    fclose(disk);
+    
+    return res;
 }
 
 
@@ -641,9 +723,11 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     // Split path into filename, extension, directory
     //int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
     printf("SPLITTING PATH.\n");
-    int numVarsFilled = 1;
     scanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("TRYING TO CREATE DIRECTORY %s\n", directory);
+    
     /*
+    
      
      Return values:
      
@@ -666,7 +750,7 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     
     printf("CHECKING DIRECTORY NAME LENGTH.\n");
     // Check if the directory name is longer than 8 characters
-    if( strlen(directory) <= 0 || strlen(directory) > 8 )
+    if(strlen(directory) > 8 )
     {
         printf("DIRECTORY NAME TOO LONG.\n");
         return -ENAMETOOLONG;
@@ -717,7 +801,18 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     
     // If we are here, it means that our directory does not exist AND
     // we have space in root to create a new directory.
-    createNewDir(directory);
+    int res = createNewDir(directory);
+    
+    if(res)
+    {
+        printf("CREATED NEW DIRECTORY.\n");
+        return 0;
+    }
+    else
+    {
+        printf("COULD NOT CREATE NEW DIRECTORY.\n");
+        return -1;
+    }
     
     
      
@@ -782,8 +877,6 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     free(extension);
     free(directory);
      */
-    
-	return 0;
 }
 
 
