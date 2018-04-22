@@ -162,11 +162,20 @@ static int get_file_size(int dirIndex, char *file)
     
     // Get start block of parent
     long dirStart = root.directories[dirIndex].nStartBlock;
+    printf("get_file_size-PARENT START BLOCK: %ld\n", dirStart);
     
     // Seek to block and get directory
     cs1550_directory_entry parent;
     fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
-    fread(&parent, BLOCK_SIZE, 1, disk);
+    r = fread(&parent, sizeof(cs1550_directory_entry), 1, disk);
+    
+    if(r <=0)
+    {
+        printf("get_file_size-ERROR: Could not read parent.\n");
+        fclose(disk);
+        return -1;
+    }
+    
     
     printf("get_file_size-GOT PARENT DIR!\n");
     printf("get_file_size-PARENT: %s, numFiles: %d\n", root.directories[dirIndex].dname, parent.nFiles);
@@ -180,6 +189,7 @@ static int get_file_size(int dirIndex, char *file)
         {
             if (strcmp(parent.files[i].fname, file) == 0)
             {
+                fclose(disk);
                 return parent.files[i].fsize;
                 break;
             }
@@ -311,11 +321,11 @@ static int create_new_dir(char *directory)
     
     
     int freeBlock = get_free_block(disk);
+    printf("create_new_dir-FREE BLOCK %d\n", freeBlock);
     
     if(freeBlock > 0 )
     {
         printf("create_new_dir-FREE BLOCK FOUND!\n");
-        printf("FREE BLOCK: %d\n", freeBlock);
         
         printf("create_new_dir-UPDATING ROOT WITH NEW INFO!\n");
         // Create new directory on root
@@ -412,7 +422,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
                 int fileSize = get_file_size(dirIndex, filename);
                 printf("getattr-FILESIZE: %d\n",fileSize);
                 
-                if(fileSize > 0)
+                if(fileSize >= 0)
                 {
                     printf("FILE EXISTS!\n");
                     //regular file, probably want to be read and write
@@ -745,7 +755,7 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
         int fileSize = get_file_size(dirIndex, filename);
         printf("mknod-FILESIZE: %d\n",fileSize);
             
-        if(fileSize > 0)
+        if(fileSize >= 0)
         {
             printf("mknod-FILE ALREADY EXISTS!\n");
             res = -EEXIST;
@@ -754,7 +764,7 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
         else
         {
             // Get root
-            FILE *disk = fopen(".disk","rb");
+            FILE *disk = fopen(".disk","r+b");
             if(disk == NULL)
             {
                 printf("mknod-ERROR: .disk could not be opened!\n");
@@ -776,11 +786,12 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
             
             // Get start block of parent
             long dirStart = root.directories[dirIndex].nStartBlock;
+            printf("mknod-PARENT START BLOCK: %ld\n",dirStart);
             
             // Seek to block and get parent
             cs1550_directory_entry parent;
             fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
-            fread(&parent, BLOCK_SIZE, 1, disk);
+            fread(&parent, sizeof(cs1550_directory_entry), 1, disk);
             
             printf("mknod-GOT PARENT DIR!\n");
             
@@ -795,13 +806,14 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
                 
                 // Find free block to put file
                 int freeBlock = get_free_block(disk);
+                printf("mknod-FREE BLOCK %d\n", freeBlock);
                 
                 if(freeBlock > 0)
                 {
                     parent.files[parent.nFiles].nStartBlock = freeBlock;
                     
                     // Increment files
-                    parent.nFiles += 1;
+                    parent.nFiles = parent.nFiles + 1;
                     
                     // Write updated parent to disk
                     fseek(disk, 0, SEEK_SET);
@@ -817,6 +829,7 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
                 }
             }
             // File capacity for dir reached
+            else
             {
                 printf("mknod-ERROR: FILE CAPACITY REACHED FOR DIR!\n");
                 res = -1;
