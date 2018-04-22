@@ -147,6 +147,7 @@ static size_t get_file_size(int dirIndex, char *file)
     
     cs1550_root_directory root;
     int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+    fseek(disk, 0, SEEK_SET);
     
     if(r <=0)
     {
@@ -398,7 +399,6 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             printf("DIRECTORY EXISTS!\n");
             // Check if file exists
             size_t fileSize = get_file_size(dirIndex, filename);
-            printf("FILE_SIZE: %zu\n", fileSize);
             
             // File exists
             if(fileSize > 0)
@@ -445,22 +445,138 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	//satisfy the compiler
 	(void) offset;
 	(void) fi;
+    int res = 0;
+    
+    printf("READDIR!\n");
+    
+    char directory[MAX_FILENAME+1];
+    char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
+    
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
 
-	//This line assumes we have no subdirectories, need to change
-	if (strcmp(path, "/") != 0)
-	return -ENOENT;
+    // Get info
+    printf("SCANNING PATH!\n");
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+    
+    
+    
+    // at root
+	if (strcmp(path, "/") == 0)
+	{
+        
+        // Get root
+        FILE *disk = fopen(".disk","rb");
+        if(disk == NULL)
+        {
+            printf("readdir-ERROR: .disk could not be opened!\n");
+            return -1;
+        }
+        
+        printf("readdir-OPENED DISK!\n");
+        
+        cs1550_root_directory root;
+        int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+        
+        
+        if(r <=0)
+        {
+            printf("readdir-ERROR: Could not read root.\n");
+            return -1;
+        }
+        printf("readdir-GOT ROOT!\n");
+        fclose(disk);
+        
+        // print all directories in root
+        int i;
+        for (i = 0; i < root.nDirectories; i++)
+        {
+            filler(buf, root.directories[i].dname, NULL, 0);
+        }
+        
+        
+    }
+    // in a sub directory, list files
+    else
+    {
+        // Check if dir exists
+        int dirIndex = get_directory(directory);
+        printf("readdir-DIR_INDEX: %d\n", dirIndex);
+        
+        // Dir exists
+        if(dirIndex >= 0)
+        {
+            // Get root
+            FILE *disk = fopen(".disk","rb");
+            if(disk == NULL)
+            {
+                printf("readdir-ERROR: .disk could not be opened!\n");
+                return -1;
+            }
+            
+            printf("readdir-OPENED DISK!\n");
+            
+            cs1550_root_directory root;
+            int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+            
+            
+            if(r <=0)
+            {
+                printf("readdir-ERROR: Could not read root.\n");
+                return -1;
+            }
+            printf("readdir-GOT ROOT!\n");
+            
+            
+            // Get start block of parent
+            long dirStart = root.directories[dirIndex].nStartBlock;
+            
+            // Seek to block and get parent
+            cs1550_directory_entry parent;
+            fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
+            fread(&parent, BLOCK_SIZE, 1, disk);
+            
+            printf("readdir-GOT PARENT DIR!\n");
+            
+            // See if file exists
+            if(parent.nFiles > 0)
+            {
+                int i = 0;
+                for (i = 0; i < parent.nFiles; i++)
+                {
+                    char *fileName = strdup(parent.files[i].fname);
+                    strcat(fileName, ".");
+                    strcat(fileName, parent.files[i].fext);
+                    filler(buf, fileName, NULL, 0);
+                }
+            }
+            // no files in subdirectory
+            else
+            {
+                res = -1;
+            }
+            
+            fclose(disk);
+        }
+        // Dir does not exist
+        else
+        {
+            res = -ENOENT;
+        }
+    }
 
+    
+    
 	//the filler function allows us to add entries to the listing
 	//read the fuse.h file for a description (in the ../include dir)
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
 
-	/*
-	//add the user stuff (subdirs or files)
-	//the +1 skips the leading '/' on the filenames
-	filler(buf, newpath + 1, NULL, 0);
-	*/
-	return 0;
+	
+	return res;
 }
 
 
