@@ -95,9 +95,9 @@ static int get_directory(char *directory)
         return -1;
     }
     
-    
     cs1550_root_directory *root;
     int r = fread(root, sizeof(cs1550_root_directory), 1, disk);
+    fclose(disk);
     
     if(r <=0)
     {
@@ -105,7 +105,7 @@ static int get_directory(char *directory)
         return -1;
     }
     
-    
+    // See if dir exists
     int i;
     for (i = 0; i < (root->nDirectories); i++)
     {
@@ -116,12 +116,62 @@ static int get_directory(char *directory)
         }
     }
     
-    
     return dirIndex;
 }
 
 
-
+// Returns size of file in directory. Returns -1 if not found
+static size_t get_file_size(int dirIndex, char *file)
+{
+    // Have dir index
+    // Get root.dir[index].start block
+    // Seek to that block
+    // Get dir.nfiles
+    // go through and look for files
+    
+    size_t fileSize = -1;
+    
+    FILE *disk = fopen(".disk","rb");
+    
+    if(disk == NULL)
+    {
+        printf("ERROR: .disk could not be opened!\n");
+        return -1;
+    }
+    
+    cs1550_root_directory *root;
+    int r = fread(root, sizeof(cs1550_root_directory), 1, disk);
+    
+    if(r <=0)
+    {
+        printf("ERROR: Could not read root.\n");
+        fclose(file);
+        return -1;
+    }
+    
+    // Get start block of parent
+    long dirStart = root->directories[dirIndex].nStartBlock;
+    
+    // Seek to block and get directory
+    cs1550_directory_entry *parent;
+    fseek(file, dirStart, SEEK_SET);
+    fread(parent, BLOCK_SIZE, 1, file);
+    
+    
+    // See if file exists
+    int i;
+    for (i = 0; i < (parent->nFiles); i++)
+    {
+        if (strcmp((parent->files)[i].fname, file) == 0)
+        {
+            fileSize = (parent->files)[i].fsize;
+            break;
+        }
+    }
+    
+    fclose(disk);
+    return fileSize;
+}
 
 
 
@@ -161,38 +211,41 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
         sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
         
         // Check if dir exists
-        int dirIndex = get_directory();
+        int dirIndex = get_directory(directory);
         
+        printf("dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+        printf("dirIndex: %d\n", dirIndex);
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-	//Check if name is subdirectory
-	/* 
-		//Might want to return a structure with these fields
-		stbuf->st_mode = S_IFDIR | 0755;
-		stbuf->st_nlink = 2;
-		res = 0; //no error
-	*/
-
-	//Check if name is a regular file
-	/*
-		//regular file, probably want to be read and write
-		stbuf->st_mode = S_IFREG | 0666; 
-		stbuf->st_nlink = 1; //file links
-		stbuf->st_size = 0; //file size - make sure you replace with real size!
-		res = 0; // no error
-	*/
-
-		//Else return that path doesn't exist
-		res = -ENOENT;
+        // Dir exists
+        if(dirIndex > 0)
+        {
+            // Check if file exists
+            size_t fileSize = get_file_size(dirIndex, filename);
+            
+            // File exists
+            if(fileSize > 0)
+            {
+                 //regular file, probably want to be read and write
+                 stbuf->st_mode = S_IFREG | 0666;
+                 stbuf->st_nlink = 1; //file links
+                 stbuf->st_size = fileSize; //file size - make sure you replace with real size!
+                 res = 0; // no error
+            }
+            // File does not exist
+            else
+            {
+                //Might want to return a structure with these fields
+                stbuf->st_mode = S_IFDIR | 0755;
+                stbuf->st_nlink = 2;
+                res = 0; //no error
+            }
+        }
+        // Dir does not exist
+        else
+        {
+            printf("ERROR: Directory specified does not exist.\n");
+            res = -ENOENT;
+        }
 	}
 	return res;
 }
@@ -256,6 +309,8 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	(void) mode;
 	(void) dev;
+    
+    (void) path;
 	return 0;
 }
 
