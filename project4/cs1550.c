@@ -221,13 +221,11 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     {
         // Get info
         printf("SCANNING PATH!\n");
-        
         sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+        printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
         
         // Check if dir exists
         int dirIndex = get_directory(directory);
-        
-        printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
         printf("DIR_INDEX: %d\n", dirIndex);
         
         // Dir exists
@@ -269,6 +267,9 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 	return res;
 }
 
+
+
+
 /* 
  * Called whenever the contents of a directory are desired. Could be from an 'ls'
  * or could even be when a user hits TAB to do autocompletion
@@ -299,27 +300,78 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
+
+
+
 /* 
  * Creates a directory. We can ignore mode since we're not dealing with
  * permissions, as long as getattr returns appropriate ones for us.
  */
 static int cs1550_mkdir(const char *path, mode_t mode)
 {
-	(void) path;
 	(void) mode;
     
+    int res = 0;
+    char directory[MAX_FILENAME+1];
+    char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
     
-    printf("MAKING DIRECTORY!\n");
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
     
+    printf("MAKING_DIR!\n");
     
+    // Get info
+    printf("SCANNING PATH!\n");
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
     
+    /*
+     0 on success
+     ENAMETOOLONG if the name is beyond 8 chars
+     EPERM if the directory is not under the root dir only
+     EEXIST if the directory already exists
+     */
     
+    // Check dir name length
+    if (strlen(directory) > 8)
+    {
+        printf("DIR NAME TOO LONG!\n");
+        res = -ENAMETOOLONG;
+    }
+    // Make dir only under root
+    else if (filename != NULL)
+    {
+        printf("TRIED TO MAKE DIR NOT IN ROOT!\n");
+        res = -EPERM;
+    }
     
-    
-    
-    
+    // Check if dir exists
+    int dirIndex = get_directory(directory);
+    printf("DIR_INDEX: %d\n", dirIndex);
 
-	return 0;
+    // Dir exists
+    if(dirIndex >= 0)
+    {
+        printf("DIRECTORY ALREADY EXISTS!\n");
+        res = -EEXIST;
+        
+    }
+    // Dir does not exist. Make it
+    else
+    {
+        
+        
+        
+        
+        
+        
+        
+        
+    }
+    
+	return res;
 }
 
 /* 
