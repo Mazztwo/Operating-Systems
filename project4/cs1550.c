@@ -239,16 +239,36 @@ static int get_free_block(FILE *disk)
     unsigned char map[3*BLOCK_SIZE];
     fseek(disk, -3*BLOCK_SIZE, SEEK_END);
     fread(map, 3*BLOCK_SIZE, 1, disk);
-    fseek(disk, -3*BLOCK_SIZE, SEEK_END);
     
     // Find next free block
+    int leave = 0;
     int i;
-    //for(i = 0)
+    for(i = 1; i < 3*BLOCK_SIZE; i++)
+    {
+        //
+        unsigned char flip = 1;
+        int j;
+        for(j=0 ; j<8; j++)
+        {
+            if( (map[i] & flip) == 0)
+            {
+                // Mark the block as taken
+                map[i] |= flip;
+                leave = 1;
+                blockPos = (i*8) + j;
+                break;
+            }
+            // Shift bit
+            flip << 1;
+        }
+        if(leave) break;
+    }
     
     
-    
-    
-    
+    // Update disk
+    fseek(disk, -3*BLOCK_SIZE, SEEK_END);
+    fwrite(map, 3*BLOCK_SIZE, 1, disk);
+
     return blockPos;
 }
 
