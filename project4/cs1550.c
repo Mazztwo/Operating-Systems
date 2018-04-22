@@ -245,7 +245,6 @@ static int get_free_block(FILE *disk)
     int i;
     for(i = 1; i < 3*BLOCK_SIZE; i++)
     {
-        //
         unsigned char flip = 1;
         int j;
         for(j=0 ; j<8; j++)
@@ -259,7 +258,7 @@ static int get_free_block(FILE *disk)
                 break;
             }
             // Shift bit
-            flip << 1;
+            flip = flip << 1;
         }
         if(leave) break;
     }
@@ -305,14 +304,27 @@ static int create_new_dir(char *directory)
     
     int freeBlock = get_free_block(disk);
     
-    // Seek back to beginning of file
-    // !!!!!!
-    
     if(freeBlock > 0 )
     {
         printf("create_new_dir-FREE BLOCK FOUND!\n");
         
+        printf("create_new_dir-UPDATING ROOT WITH NEW INFO!");
+        // Create new directory on root
+        strcpy(root.directories[root.nDirectories].dname, directory);
+        root.directories[root.nDirectories].nStartBlock = freeBlock;
+        root.nDirectories = root.nDirectories + 1;
         
+        cs1550_directory_entry entry;
+        entry.nFiles = 0;
+        
+        // Write updated root and new entry to disk
+        fseek(disk, 0, SEEK_SET);
+        fwrite(&root, sizeof(cs1550_root_directory), 1, disk);
+        printf("create_new_dir-WROTE UPDATED ROOT TO DISK!");
+        fseek(disk, freeBlock, SEEK_SET);
+        fwrite(&entry, sizeof(cs1550_directory_entry),1,disk);
+        printf("create_new_dir-WROTE NEW DIR TO DISK!");
+
         created = 1;
         
     }
