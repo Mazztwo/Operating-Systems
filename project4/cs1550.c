@@ -135,8 +135,7 @@ static int get_file_size(int dirIndex, char *file, char *extension)
     // Get dir.nfiles
     // go through and look for files
     
-    int fileSize = -1;
-    
+
     FILE *disk = fopen(".disk","rb");
     
     if(disk == NULL)
