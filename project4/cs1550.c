@@ -167,6 +167,7 @@ static size_t get_file_size(int dirIndex, char *file)
     fread(&parent, BLOCK_SIZE, 1, disk);
     
     printf("get_file_size-GOT PARENT DIR!\n");
+    printf("get_file_sizze-PARENT: %s, numFiles: %d\n", root.directories[dirIndex].dname, parent.nFiles);
     
     // See if file exists
     if(parent.nFiles > 0)
@@ -327,6 +328,7 @@ static int create_new_dir(char *directory)
         fseek(disk, 0, SEEK_SET);
         fwrite(&root, sizeof(cs1550_root_directory), 1, disk);
         printf("create_new_dir-WROTE UPDATED ROOT TO DISK!\n");
+        fseek(disk, 0, SEEK_SET);
         fseek(disk, BLOCK_SIZE*freeBlock, SEEK_SET);
         fwrite(&entry, sizeof(cs1550_directory_entry),1,disk);
         printf("create_new_dir-WROTE NEW DIR TO DISK!\n");
@@ -346,10 +348,6 @@ static int create_new_dir(char *directory)
     fclose(disk);
     return created;
 }
-
-
-
-
 
 
 
@@ -397,18 +395,23 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
         if(dirIndex >= 0)
         {
             printf("DIRECTORY EXISTS!\n");
-            // Check if file exists
-            size_t fileSize = get_file_size(dirIndex, filename);
             
             // File exists
-            if(fileSize > 0)
+            if(strcmp(filename, "\0") != 0 && strcmp(extension, "\0") != 0)
             {
+                // Get file size
                 printf("FILE EXISTS!\n");
-                 //regular file, probably want to be read and write
-                 stbuf->st_mode = S_IFREG | 0666;
-                 stbuf->st_nlink = 1; //file links
-                 stbuf->st_size = fileSize; //file size - make sure you replace with real size!
-                 res = 0; // no error
+                size_t fileSize = get_file_size(dirIndex, filename);
+                
+                //regular file, probably want to be read and write
+                stbuf->st_mode = S_IFREG | 0666;
+                stbuf->st_nlink = 1; //file links
+                stbuf->st_size = fileSize; //file size - make sure you replace with real size!
+                res = 0; // no error
+            }
+            else if(strcmp(filename, "\0") != 0)
+            {
+                res = -ENOENT;
             }
             // File does not exist
             else
@@ -553,11 +556,6 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                     filler(buf, fileName, NULL, 0);
                 }
             }
-            // no files in subdirectory
-            else
-            {
-                res = -1;
-            }
             
             fclose(disk);
         }
@@ -617,13 +615,13 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     if (strlen(directory) > 8)
     {
         printf("DIR NAME TOO LONG!\n");
-        res = -ENAMETOOLONG;
+        return -ENAMETOOLONG;
     }
     // Make dir only under root
-    else if (filename != NULL)
+    else if (strcmp(filename, "\0") != 0)
     {
         printf("TRIED TO MAKE DIR NOT IN ROOT!\n");
-        res = -EPERM;
+        return -EPERM;
     }
     
     // Check if dir exists
