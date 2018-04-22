@@ -82,7 +82,8 @@ struct cs1550_disk_block
 typedef struct cs1550_disk_block cs1550_disk_block;
 
 
-// Returns index of directory in root. Returns -1 if not found
+// Returns index of directory in root.
+// Returns -1 if not found
 static int get_directory(char *directory)
 {
     int dirIndex = -1;
@@ -124,8 +125,9 @@ static int get_directory(char *directory)
 }
 
 
-// Returns size of file in directory. Returns -1 if not found
-static size_t get_file_size(int dirIndex, char *file)
+// Returns size of file in directory.
+// Returns -1 if not found
+static int get_file_size(int dirIndex, char *file)
 {
     // Have dir index
     // Get root.dir[index].start block
@@ -133,7 +135,7 @@ static size_t get_file_size(int dirIndex, char *file)
     // Get dir.nfiles
     // go through and look for files
     
-    size_t fileSize = -1;
+    int fileSize = -1;
     
     FILE *disk = fopen(".disk","rb");
     
@@ -167,7 +169,7 @@ static size_t get_file_size(int dirIndex, char *file)
     fread(&parent, BLOCK_SIZE, 1, disk);
     
     printf("get_file_size-GOT PARENT DIR!\n");
-    printf("get_file_sizze-PARENT: %s, numFiles: %d\n", root.directories[dirIndex].dname, parent.nFiles);
+    printf("get_file_size-PARENT: %s, numFiles: %d\n", root.directories[dirIndex].dname, parent.nFiles);
     
     // See if file exists
     if(parent.nFiles > 0)
@@ -178,14 +180,14 @@ static size_t get_file_size(int dirIndex, char *file)
         {
             if (strcmp(parent.files[i].fname, file) == 0)
             {
-                fileSize = parent.files[i].fsize;
+                return parent.files[i].fsize;
                 break;
             }
         }
     }
     
     fclose(disk);
-    return fileSize;
+    return -1;
 }
 
 
@@ -352,7 +354,6 @@ static int create_new_dir(char *directory)
 
 
 
-
 /*
  * Called whenever the system wants to know the file attributes, including
  * simply whether the file exists or not. 
@@ -395,39 +396,45 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
         if(dirIndex >= 0)
         {
             printf("DIRECTORY EXISTS!\n");
-            
-            // File exists
-            if(strcmp(filename, "\0") != 0 && strcmp(extension, "\0") != 0)
+           
+            // There is no filename present. Only dir
+            if(strcmp(filename, "\0") == 0)
             {
-                // Get file size
-                printf("FILE EXISTS!\n");
-                size_t fileSize = get_file_size(dirIndex, filename);
-                
-                //regular file, probably want to be read and write
-                stbuf->st_mode = S_IFREG | 0666;
-                stbuf->st_nlink = 1; //file links
-                stbuf->st_size = fileSize; //file size - make sure you replace with real size!
-                res = 0; // no error
-            }
-            else if(strcmp(filename, "\0") != 0)
-            {
-                res = -ENOENT;
-            }
-            // File does not exist
-            else
-            {
-                printf("FILE DOES NOT EXIST!\n");
                 //Might want to return a structure with these fields
                 stbuf->st_mode = S_IFDIR | 0755;
                 stbuf->st_nlink = 2;
-                res = 0; //no error
+                return 0; //no error
             }
+            // File exists
+            else
+            {
+                // Get file size
+                int fileSize = get_file_size(dirIndex, filename);
+                printf("getattr-FILESIZE: %d\n",fileSize);
+                
+                if(fileSize > 0)
+                {
+                    printf("FILE EXISTS!\n");
+                    //regular file, probably want to be read and write
+                    stbuf->st_mode = S_IFREG | 0666;
+                    stbuf->st_nlink = 1; //file links
+                    stbuf->st_size = (size_t)fileSize; //file size - make sure you replace with real size!
+                    res = 0; // no error
+                }
+                // File does not exist
+                else
+                {
+                    printf("FILE DOES NOT EXIST!\n");
+                    res = -ENOENT;
+                }
+            }
+            
         }
         // Dir does not exist
         else
         {
             printf("ERROR: Directory specified does not exist.\n");
-            res = -ENOENT;
+            return -ENOENT;
         }
 	}
     
@@ -562,6 +569,7 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         // Dir does not exist
         else
         {
+            printf("ERROR: Dir specified does not exist.\n");
             res = -ENOENT;
         }
     }
@@ -684,8 +692,151 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
 	(void) mode;
 	(void) dev;
     
-    (void) path;
-	return 0;
+    int res = 0;
+    char directory[MAX_FILENAME+1];
+    char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
+    
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
+    
+    printf("MKNOD!\n");
+    
+    // Get info
+    printf("SCANNING PATH!\n");
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+    
+    /*
+     0 on success
+     ENAMETOOLONG if the name is beyond 8.3 chars
+     EPERM if the file is trying to be created in the root dir
+     EEXIST if the file already exists
+     */
+    
+    // Given good path?
+    if(strcmp(directory, "\0") == 0 || strcmp(filename, "\0") == 0 || strcmp(extension, "\0") == 0)
+    {
+        printf("TRIED TO MAKE FILE IN ROOT!\n");
+        return -EPERM;
+    }
+    // Check dir name length
+    else if (strlen(filename) > MAX_FILENAME)
+    {
+        printf("DIR NAME TOO LONG!\n");
+        return -ENAMETOOLONG;
+    }
+    // Check ext name length
+    else if(strlen(extension) > MAX_EXTENSION)
+    {
+        printf("EXT NAME TOO LONG!\n");
+        return -ENAMETOOLONG;
+    }
+    
+    // Check if dir exists first
+    int dirIndex = get_directory(directory);
+    printf("mknod-DIR_INDEX: %d\n", dirIndex);
+    
+    // Dir exists
+    if(dirIndex >= 0)
+    {
+        // See if file exists
+        int fileSize = get_file_size(dirIndex, filename);
+        printf("mknod-FILESIZE: %d\n",fileSize);
+            
+        if(fileSize > 0)
+        {
+            printf("mknod-FILE ALREADY EXISTS!\n");
+            res = -EEXIST;
+        }
+        // File does not exist, create it
+        else
+        {
+            // Get root
+            FILE *disk = fopen(".disk","rb");
+            if(disk == NULL)
+            {
+                printf("mknod-ERROR: .disk could not be opened!\n");
+                return -1;
+            }
+            
+            printf("mknod-OPENED DISK!\n");
+            
+            cs1550_root_directory root;
+            int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+            
+
+            if(r <=0)
+            {
+                printf("mknod-ERROR: Could not read root.\n");
+                return -1;
+            }
+            printf("mknod-GOT ROOT!\n");
+            
+            // Get start block of parent
+            long dirStart = root.directories[dirIndex].nStartBlock;
+            
+            // Seek to block and get parent
+            cs1550_directory_entry parent;
+            fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
+            fread(&parent, BLOCK_SIZE, 1, disk);
+            
+            printf("mknod-GOT PARENT DIR!\n");
+            
+            // Make sure file capacity not reached
+            if(parent.nFiles <= MAX_FILES_IN_DIR)
+            {
+                // Update parent directory
+                strcpy(parent.files[parent.nFiles].fname, filename);
+                strcpy(parent.files[parent.nFiles].fext, extension);
+                parent.files[parent.nFiles].fsize = 0;
+            
+                
+                // Find free block to put file
+                int freeBlock = get_free_block(disk);
+                
+                if(freeBlock > 0)
+                {
+                    parent.files[parent.nFiles].nStartBlock = freeBlock;
+                    
+                    // Increment files
+                    parent.nFiles += 1;
+                    
+                    // Write updated parent to disk
+                    fseek(disk, 0, SEEK_SET);
+                    fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
+                    fwrite(&parent, sizeof(cs1550_directory_entry),1,disk);
+                    printf("mknod-UPDATED PARENT ON DISK!\n");
+                    
+                }
+                else
+                {
+                    printf("mknod-ERROR: COULD NOT FIND FREE BLOCK!\n");
+                    res = -1;
+                }
+            }
+            // File capacity for dir reached
+            {
+                printf("mknod-ERROR: FILE CAPACITY REACHED FOR DIR!\n");
+                res = -1;
+            }
+            
+            fclose(disk);
+        }
+        
+       
+    }
+    // Dir does not exist
+    else
+    {
+        res = -ENOENT;
+    }
+    
+    
+    
+    
+	return res;
 }
 
 /*
