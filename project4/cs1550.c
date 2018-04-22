@@ -127,7 +127,7 @@ static int get_directory(char *directory)
 
 // Returns size of file in directory.
 // Returns -1 if not found
-static int get_file_size(int dirIndex, char *file)
+static int get_file_size(int dirIndex, char *file, char *extension)
 {
     // Have dir index
     // Get root.dir[index].start block
@@ -187,7 +187,7 @@ static int get_file_size(int dirIndex, char *file)
         int i;
         for (i = 0; i < parent.nFiles; i++)
         {
-            if (strcmp(parent.files[i].fname, file) == 0)
+            if (strcmp(parent.files[i].fname, file) == 0 && strcmp(parent.files[i].fext, extension) == 0)
             {
                 fclose(disk);
                 return parent.files[i].fsize;
@@ -419,7 +419,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             else
             {
                 // Get file size
-                int fileSize = get_file_size(dirIndex, filename);
+                int fileSize = get_file_size(dirIndex, filename, extension);
                 printf("getattr-FILESIZE: %d\n",fileSize);
                 
                 if(fileSize >= 0)
@@ -752,7 +752,7 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
     if(dirIndex >= 0)
     {
         // See if file exists
-        int fileSize = get_file_size(dirIndex, filename);
+        int fileSize = get_file_size(dirIndex, filename, extension);
         printf("mknod-FILESIZE: %d\n",fileSize);
             
         if(fileSize >= 0)
@@ -843,7 +843,7 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
     // Dir does not exist
     else
     {
-        res = -ENOENT;
+        res = -EPERM;
     }
     
     
@@ -897,11 +897,66 @@ static int cs1550_write(const char *path, const char *buf, size_t size,
 	(void) fi;
 	(void) path;
 
-	//check to make sure path exists
-	//check that size is > 0
-	//check that offset is <= to the file size
+    char directory[MAX_FILENAME+1];
+    char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
+    
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
+    
+    printf("WRITE!\n");
+    
+    // Get info
+    printf("SCANNING PATH!\n");
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+    
+	// check to make sure path exists
+    if(strcmp(directory, "\0") == 0 || strcmp(filename, "\0") == 0 || strcmp(extension, "\0") == 0)
+    {
+        printf("write-PATH GIVEN DOES NOT EXIST!\n");
+        return -EPERM;
+    }
+	// check that size is > 0
+    else if(size <= 0)
+    {
+        printf("write-SIZE LESS THAN OR EQUAL TO 0!\n");
+        return 0;
+    }
+    
+	// Check that offset is <= to the file size
+    // Get parent index
+    // Get root
+    // Find file
+    // Check file size
+    int dirIndex = get_directory(directory);
+    
+    // Dir exists
+    if(dirIndex >= 0)
+    {
+        
+    }
+    // Dir does not exist
+    else
+    {
+        printf("write-DIR DOES NOT EXIST!\n");
+        size = 0;
+    }
+    
+    
 	//write data
 	//set size (should be same as input) and return, or error
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 	return size;
 }
