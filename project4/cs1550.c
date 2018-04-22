@@ -925,7 +925,6 @@ static int cs1550_write(const char *path, const char *buf, size_t size,
         return 0;
     }
     
-	// Check that offset is <= to the file size
     // Get parent index
     // Get root
     // Find file
@@ -935,7 +934,79 @@ static int cs1550_write(const char *path, const char *buf, size_t size,
     // Dir exists
     if(dirIndex >= 0)
     {
+        // See if file exists
+        int fileSize = get_file_size(dirIndex, filename, extension);
+        printf("write-FILESIZE: %d\n",fileSize);
         
+        // File does not exist
+        if(fileSize < 0)
+        {
+            printf("write-FILE DOES NOT EXIST!\n");
+            return -EPERM;
+        }
+        // File exists
+        else
+        {
+            // Check that offset is <= to the file size
+            if(offset > fileSize)
+            {
+                return -EFBIG;
+            }
+            // write data
+            else
+            {
+                // Get start block of file
+                // Get root
+                FILE *disk = fopen(".disk","r+b");
+                
+                if(disk == NULL)
+                {
+                    printf("write-ERROR: .disk could not be opened!\n");
+                    return -1;
+                }
+                
+                printf("write-OPENED DISK!\n");
+                
+                cs1550_root_directory root;
+                int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+                
+                
+                if(r <=0)
+                {
+                    printf("write-ERROR: Could not read root.\n");
+                    return -1;
+                }
+                printf("write-GOT ROOT!\n");
+                
+                // Get start block of parent
+                long dirStart = root.directories[dirIndex].nStartBlock;
+                printf("write-PARENT START BLOCK: %ld\n",dirStart);
+                
+                // Seek to block and get parent
+                cs1550_directory_entry parent;
+                fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
+                fread(&parent, sizeof(cs1550_directory_entry), 1, disk);
+                
+                printf("write-GOT PARENT DIR!\n");
+                
+                // Go to start of file
+                fseek(disk, 0, SEEK_SET);
+                
+                // Find the file
+                int i;
+                for(i = 0; i < parent.nFiles; i++)
+                {
+                    
+                }
+                
+                
+                
+                
+                
+                
+            }
+            
+        }
     }
     // Dir does not exist
     else
@@ -944,20 +1015,6 @@ static int cs1550_write(const char *path, const char *buf, size_t size,
         size = 0;
     }
     
-    
-	//write data
-	//set size (should be same as input) and return, or error
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
 	return size;
 }
 
