@@ -1,8 +1,10 @@
-//////////////////////
-// Alessio Mazzone  //
-// CS 1550          //
-// Project 4        //
-//////////////////////
+/*
+	FUSE: Filesystem in Userspace
+	Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
+
+	This program can be distributed under the terms of the GNU GPL.
+	See the file COPYING.
+*/
 
 #define	FUSE_USE_VERSION 26
 
@@ -11,7 +13,6 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdlib.h>
 
 //size of a disk block
 #define	BLOCK_SIZE 512
@@ -81,319 +82,44 @@ struct cs1550_disk_block
 typedef struct cs1550_disk_block cs1550_disk_block;
 
 
-
-// Gets directory index in disk
-static int getDirIndex(char *directory)
+// Returns index of directory in root. Returns -1 if not found
+static int get_directory(char *directory)
 {
-    int ind = -1;
+    int dirIndex = -1;
     
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "rb");
+    FILE *disk = fopen(".disk","rb");
     
-    // If there is an issue with disk, return ENOENT
     if(disk == NULL)
     {
-        fclose(disk);
-        printf("ERROR OPENING DISK\n");
-        return-ENOENT;
-    }
-    
-    // Make sure to seek to beginning of disk to start search!
-    fseek(disk, 0, SEEK_SET);
-    cs1550_root_directory root;
-    int er = fread(&root, BLOCK_SIZE, 1, disk);
-    
-    if(er != 1)
-    {
-        fclose(disk);
-        printf("COULD NOT READ ROOT\n");
-        return-ENOENT;
-    }
-    
-
-    
-    
-    int i;
-    for(i = 0; i < MAX_DIRS_IN_ROOT; i++)
-    {
-        char *dirname = "";
-        if(root.directories != NULL)
-        {
-            dirname = root.directories[i].dname;
-        }
-        
-        printf("Checking if %s = %s\n", dirname, directory);
-        
-        if( strcmp(directory, dirname) == 0 )
-        {
-            printf("Found a match! %s = %s\n", dirname, directory);
-            fclose(disk);
-            return i;
-        }
-    }
-    
-    // DONT FORGET TO CLOSE DISK!
-    fclose(disk);
-    return ind;
-}
-
-
-
-// Gets file index in disk
-static int getFileIndex(int dirIndex,char *filename, size_t *fileSize)
-{
-    int ind = -1;
-    
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "rb");
-    
-    // If there is an issue with disk, return ENOENT
-    if(disk == NULL)
-    {
-        fclose(disk);
-        printf("ERROR OPENING DISK\n");
-        return-ENOENT;
-    }
-    
-    // Make sure to seek to beginning of disk to start search!
-    fseek(disk, 0, SEEK_SET);
-    cs1550_root_directory root;
-    int er = fread(&root, BLOCK_SIZE, 1, disk);
-    
-    if(er <= 1)
-    {
-        fclose(disk);
-        printf("COULD NOT READ ROOT\n");
-        return-ENOENT;
-    }
-    else if(root.directories == NULL)
-    {
-        fclose(disk);
-        printf("ROOT DIRECTORIES[] == NULL\n");
-        return-ENOENT;
-    }
-    
-    
-    // Go to block location. Get start block of directory file is in!
-    fseek(disk, root.directories[dirIndex].nStartBlock * BLOCK_SIZE, SEEK_SET);
-    
-    // Read block from disk
-    cs1550_directory_entry  entry;
-    int res = fread(&entry, BLOCK_SIZE, 1, disk);
-    
-    if(res <= 1)
-    {
-        fclose(disk);
-        printf("COULD NOT READ DIRECTORY FROM DISK\n");
-        return-ENOENT;
-    }
-    else if(entry.files == NULL)
-    {
-        fclose(disk);
-        printf("DIRECTORY FILES[] == NULL\n");
-        return-ENOENT;
-    }
-    
-    int i;
-    for(i = 0; i < MAX_FILES_IN_DIR; i++)
-    {
-        // compare filename to path/filename
-        if(strcmp(filename, entry.files[i].fname) == 0)
-        {
-            ind = i;
-            *fileSize = entry.files[i].fsize;
-        }
-        
-    }
-    
-    
-    // DONT FORGET TO CLOSE DISK!
-    fclose(disk);
-    return ind;
-}
-
-
-
-// Checks if number of directories is under limit
-static int checkNumDirectories(void)
-{
-    int res = -1;
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "rb");
-    
-    // If there is an issue with disk, return ENOENT
-    if(disk == NULL)
-    {
-        fclose(disk);
-        printf("ERROR OPENING DISK\n");
-        return-ENOENT;
-    }
-    
-    // Make sure to seek to beginning of disk to start search!
-    fseek(disk, 0, SEEK_SET);
-    cs1550_root_directory root;
-    int er = fread(&root, BLOCK_SIZE, 1, disk);
-    
-    if(er <= 1)
-    {
-        fclose(disk);
-        printf("COULD NOT READ ROOT\n");
-        return-ENOENT;
-    }
-    
-    // Means we are good to create another directory
-    if(root.nDirectories < MAX_DIRS_IN_ROOT)
-    {
-        res = 1;
-    }
-    
-    fclose(disk);
-    return res;
-}
-
-
-// Finds free block in bitmap used to store usage
-static long getFreeBlock(FILE *disk)
-{
-    long res = -1;
-    long location;
-    /*
-    // Pointer to start of disk. Open in read/write, binary mode.
-    FILE *disk = fopen(".disk", "r+b");
-    
-    // If there is an issue with disk, return ENOENT
-    if(disk == NULL)
-    {
-        fclose(disk);
-        printf("ERROR OPENING DISK\n");
-        return-ENOENT;
-    }
-    */
-    
-    int mapSize = 3*BLOCK_SIZE;
-    fseek(disk, 0, SEEK_SET);
-    
-    // grab bitmap from last few blocks of disk
-    unsigned char map[mapSize];
-    int x = fread(map,mapSize,1,disk);
-    if(x < 0)
-    {
-        printf("COULD NOT READ BITMAP FROM END OF DISK.\n");
+        printf("ERROR: .disk could not be opened!\n");
         return -1;
     }
     
-    // Bitmap is three blocks from end disk
-    x =fseek(disk, -mapSize, SEEK_END);
-    if(x < 0)
+    
+    cs1550_root_directory *root;
+    int r = fread(root, sizeof(cs1550_root_directory), 1, disk);
+    
+    if(r <=0)
     {
-        printf("COULD NOT SEEK TO START OF BITMAP.\n");
+        printf("ERROR: Could not read root.\n");
         return -1;
     }
     
-    // Find byte
-    for(location = 0; location < mapSize; location++)
-    {
-        // Find next 0 "free" bit
-        unsigned char check = 1;
-        unsigned char isZero;
-        int k;
-        for(k = 0; k < 8; k++)
-        {
-            isZero = map[location]&check;
-            // Found 0
-            if(!isZero)
-            {
-                // Flip found bit to 1
-                map[location] |= check;
-                
-                // Update map
-                fwrite(map, mapSize, 1, disk);
-                
-                // Block is the byte plus the offset
-                res = (location*8)+k+1;
-                return res;
-            }
-            
-            // Shift bit over
-            check = check<<1;
-        }
-    }
     
-    return -1;
-    
-}
-
-
-// Creates a new directory
-static int createNewDir(char *directory)
-{
-    int res = 1;
-    long freeBlock = -1;
-    // Pointer to start of disk. Open in read/write, binary mode.
-    FILE *disk = fopen(".disk", "r+b");
-    
-    // If there is an issue with disk, return ENOENT
-    if(disk == NULL)
-    {
-        fclose(disk);
-        printf("ERROR OPENING DISK\n");
-        return-ENOENT;
-    }
-    
-    // Make sure to seek to beginning of disk to start search!
-    fseek(disk, 0, SEEK_SET);
-    cs1550_root_directory root;
-    int er = fread(&root, BLOCK_SIZE, 1, disk);
-    
-    if(er <= 1)
-    {
-        fclose(disk);
-        printf("COULD NOT READ ROOT\n");
-        return-ENOENT;
-    }
-    
-    // Find first free block
     int i;
-    for(i = 0; i < MAX_DIRS_IN_ROOT; i++)
+    for (i = 0; i < (root->nDirectories); i++)
     {
-        // Find first free directory
-        if(root.directories[i].dname == 0 || root.directories[i].dname == '\0')
+        if (strcmp((root->directories)[i].dname, directory) == 0)
         {
-            strcpy(root.directories[i].dname, directory);
-            freeBlock = getFreeBlock(disk);
-            if(freeBlock == -1 )
-            {
-                printf("NO FREE BLOCK FOUND IN BITMAP.\n");
-                fclose(disk);
-                return -1;
-            }
-            // update root
-            root.directories[i].nStartBlock = freeBlock;
+            dirIndex = i;
             break;
         }
     }
     
-    // Go back to start of disk
-    fseek(disk, 0, SEEK_SET);
     
-    // Create new directory
-    cs1550_directory_entry entry;
-    entry.nFiles = 0;
-    
-    // Go to free block location
-    fseek(disk, freeBlock*BLOCK_SIZE, SEEK_SET);
-    
-    // Write new entry
-    fwrite((void*) &entry, BLOCK_SIZE, 1, disk);
-    
-    // Overwrite root
-    fseek(disk, 0, SEEK_SET);
-    fwrite((void*) &root, BLOCK_SIZE, 1, disk);
-    
-    fclose(disk);
-    
-    return res;
+    return dirIndex;
 }
+
 
 
 
@@ -414,25 +140,16 @@ static int createNewDir(char *directory)
 static int cs1550_getattr(const char *path, struct stat *stbuf)
 {
 	int res = 0;
-	memset(stbuf, 0, sizeof(struct stat));
-    
-   
-    // Declare each of the three pieces. We are using 8.3 scheme,
-    // which means file names and directories are in 8.3 format.
-    // Leave one char for \0, so technically 9.4!
-    //char *filename = calloc(9, sizeof(char));
-    //char *extension = calloc(4, sizeof(char));
-    //char *directory = calloc(9, sizeof(char));
-    
     char directory[MAX_FILENAME+1];
-    char extension[MAX_EXTENSION+1];
     char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
     
-    memset(directory, 0, MAX_FILENAME + 1);
-    memset(extension, 0, MAX_EXTENSION + 1);
-    memset(filename, 0, MAX_FILENAME + 1);
-    
-	// is path the root dir?
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
+	memset(stbuf, 0, sizeof(struct stat));
+   
+	//is path the root dir?
 	if (strcmp(path, "/") == 0)
     {
 		stbuf->st_mode = S_IFDIR | 0755;
@@ -440,208 +157,45 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
 	}
     else
     {
-        // Split path into filename, extension, directory
-        //int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+        // Get info
         sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
-/* Scrapping this scheme as I couldn't get it to work.
-May be useful later.
-        // There are three cases we are concerned with in terms of the
-        // return value of sscanf(path). The return value tells us the number
-        // of variables that the function has filled. So, if everything is
-        // correct in the path, the return value can be -0,1,2, or 3. Every path
-        // should include at least a directory, so numVarsFilled should at
-        // least always be 1 (unless error). If path points to a directory, then numVarsFilled
-        // = 1. If path points to a filename, then numVarsFilled = 3, because
-        // 1 directory + 1 file name + 1 extension since every filename has
         
-        // an extension in our 8.3 scheme.
-*/
-        int dirIndex = getDirIndex(directory);
-        printf("Location of directory: %d\n", dirIndex);
+        // Check if dir exists
+        int dirIndex = get_directory();
         
-        if(dirIndex == -1)
-        {
-            printf("ERROR FINDING DIRECTORY.\n");
-            return -ENOENT;
-        }
         
-        // Case 1: path points to a directory
-        //if(numVarsFilled == 1
-        if(filename[0] == '\0')
-        {
-            printf("Path indicated directory with no file.\n");
-            // We must see if the directory pointed to by path
-            // exists in our file system. Since we are guaranteed a
-            // two tier system, we can start from root and work down. This
-            // is because only root has subdirectories, and subdirectories
-            // only contain files, as per the project specifications.
-            
-            /*
-            // Make sure to seek to beginning of disk to start search!
-            fseek(disk, 0, SEEK_SET);
-            cs1550_root_directory root;
-            fread(&root, BLOCK_SIZE, 1, disk);
-            
-            // Scan blocks in .disk to see if entry exists
-            int i;
-            for(i = 0; i < root.nDirectories; i++)
-            {
-                if( strcmp(directory, root.directories[i].dname) == 0 )
-                {
-                     //Might want to return a structure with these fields
-                     stbuf->st_mode = S_IFDIR | 0755;
-                     stbuf->st_nlink = 2;
-                     res = 0; //no error
-                    break;
-                }
-                else
-                {
-                    // directory not found
-                    res = -ENOENT;
-                }
-            }
-             */
-            
-            
-            stbuf->st_mode = S_IFDIR | 0755;
-            stbuf->st_nlink = 2;
-            res = 0; //no error
-            
-        }
-        // Case 2: path points to a file
-        // Changed from numVarsFilled == 3 to >= 2 because there is
-        // a chance that a file may not have an extension.
-        //else if(numVarsFilled  >= 2)
-        else
-        {
-            printf("Path indicated file within valid subdirectory.\n");
-            
-            // Pass pointer of file size to fileIndex so we can
-            // trick the funciton into giving us two return values.
-            size_t fileSize = 0;
-            int fileIndex = getFileIndex(dirIndex,filename, &fileSize);
-            printf("Location of file: %d\n", fileIndex);
-            
-            if(fileIndex == -1)
-            {
-                printf("ERROR FINDING FILE IN VALID DIRECTORY.");
-                return -ENOENT;
-            }
-            
-            //regular file, probably want to be read and write
-            stbuf->st_mode = S_IFREG | 0666;
-            stbuf->st_nlink = 1; //file links
-            stbuf->st_size = fileSize; //file size - make sure you replace with real size!
-            res = 0; // no error
         
-            /*
-            // If a file is found, we must find the block that
-            // the file starts at. Start by finding the block
-            // where the directory is located.
-            fseek(disk, 0, SEEK_SET);
-            cs1550_root_directory root;
-            fread(&root, BLOCK_SIZE, 1, disk);
-            
-            // Scan blocks in .disk to see if entry exists
-            int i;
-            
-            // Initialize where directoryBlock is.
-            // directoryBlock will hold the offset from root.
-            // Initialized to -11 because 11 is my favorite number.
-            long directoryBlock = -11;
-            
-            for(i = 0; i < root.nDirectories; i++)
-            {
-                if( strcmp(directory, root.directories[i].dname) == 0 )
-                {
-                    directoryBlock = root.directories[i].nStartBlock;
-                }
-                else
-                {
-                    // directory not found
-                    res = -ENOENT;
-                }
-            }
-            
-            // Directory not found
-            if(directoryBlock == -11)
-            {
-                //free(filename);
-                //free(extension);
-                //free(directory);
-                fclose(disk);
-                return -ENOENT;
-            }
-            
-            // Move disk pointer to the start location of the directory block
-            fseek(disk, BLOCK_SIZE*directoryBlock, SEEK_SET);
-            
-            // Create a directory entry
-            cs1550_directory_entry entry;
-            fread(&entry, BLOCK_SIZE, 1, disk);
-            
-            // We must now scan through the files to see if the file
-            // found in our path exists in this directory. This is very
-            // similar to how we found our directory from root.
-            
-            long startOfFile = -11;
-            
-            for(i = 0; i < entry.nFiles; i++)
-            {
-                // compare filename to path/filename
-                // compare extension to path/filename.extension
-                if(strcmp(filename, entry.files[i].fname) == 0)
-                {
-                    if(strcmp(extension, entry.files[i].fext) == 0)
-                    {
-                        startOfFile = entry.files[i].nStartBlock;
-                    }
-                }
-            }
-            
-            // File was not found scaning directory
-            if(startOfFile == -11)
-            {
-                res = -ENOENT;
-            }
-            // File was found in directory
-            else
-            {
-                
-                //regular file, probably want to be read and write
-                stbuf->st_mode = S_IFREG | 0666;
-                stbuf->st_nlink = 1; //file links
-                stbuf->st_size = entry.files[startOfFile].fsize; //file size - make sure you replace with real size!
-                res = 0; // no error
-                
-            }*/
-                       
-        }
-        // Case 3: "In the case of an input failure before any data could be successfully interpreted, EOF is returned." Also, if no variables
-        // could be filled, then this is also an error.
-        /*
-        else if(numVarsFilled == EOF || numVarsFilled == 0)
-        {
-                res = -ENOENT;
-        }*/
+        
+        
+        
+        
+        
+        
+        
+        
+        
+	//Check if name is subdirectory
+	/* 
+		//Might want to return a structure with these fields
+		stbuf->st_mode = S_IFDIR | 0755;
+		stbuf->st_nlink = 2;
+		res = 0; //no error
+	*/
 
+	//Check if name is a regular file
+	/*
+		//regular file, probably want to be read and write
+		stbuf->st_mode = S_IFREG | 0666; 
+		stbuf->st_nlink = 1; //file links
+		stbuf->st_size = 0; //file size - make sure you replace with real size!
+		res = 0; // no error
+	*/
+
+		//Else return that path doesn't exist
+		res = -ENOENT;
 	}
-    
-    
-    // DONT FORGET TO FREE MALLOC'D PIECES (filename, directory, extension)
-    // DONT FORGET TO CLOSE DISK FILE
-    //free(filename);
-    //free(extension);
-    //free(directory);
-    //fclose(disk);
-    
 	return res;
 }
-
-
-
-
-
 
 /* 
  * Called whenever the contents of a directory are desired. Could be from an 'ls'
@@ -673,217 +227,17 @@ static int cs1550_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
 /* 
  * Creates a directory. We can ignore mode since we're not dealing with
  * permissions, as long as getattr returns appropriate ones for us.
  */
 static int cs1550_mkdir(const char *path, mode_t mode)
 {
+	(void) path;
 	(void) mode;
-    
-    printf("ENTERING MKDIR.\n");
-    
-    /*
-    // Pointer to start of disk. Open in read, binary mode.
-    FILE *disk = fopen(".disk", "r+b");
-    
-    // If there is an issue with disk, return ENOENT
-    if(disk == NULL)
-    {
-        fclose(disk);
-        return-ENOENT;
-    }
-    
-    // Declare each of the three pieces. We are using 8.3 scheme,
-    // which means file names and directories are in 8.3 format.
-    // Leave one char for \0, so technically 9.4!
-    char *filename = calloc(9, sizeof(char));
-    char *extension = calloc(4, sizeof(char));
-    char *directory = calloc(9, sizeof(char));
-    */
-    
-    // Make these strings hold a bit more just in case long filename/extension
-    char directory[MAX_FILENAME+30];
-    char extension[MAX_EXTENSION+30];
-    char filename[MAX_FILENAME+30];
-    
-    memset(directory, 0, MAX_FILENAME + 30);
-    memset(extension, 0, MAX_EXTENSION + 30);
-    memset(filename, 0, MAX_FILENAME + 30);
-    
-    // Split path into filename, extension, directory
-    //int numVarsFilled = sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
-    printf("SPLITTING PATH.\n");
-    scanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
-    printf("TRYING TO CREATE DIRECTORY %s\n", directory);
-    
-    /*
-    
-     
-     Return values:
-     
-     0 on success
-     ENAMETOOLONG if the name is beyond 8 chars
-     EPERM if the directory is not under the root dir only
-     EEXIST if the directory already exists
-     
-     */
-    
-    // Check if dir is null
-    // Compiler warning tells me directory will never be null, so remove
-    /*
-    if(directory == 0)
-    {
-        printf("DIRECTORY NULL OR DIRECTORY = 0\n");
-        return -1;
-    }
-    printf("DIRECTORY NOT NULL.\n");*/
-    
-    printf("CHECKING DIRECTORY NAME LENGTH.\n");
-    // Check if the directory name is longer than 8 characters
-    if(strlen(directory) > 8 )
-    {
-        printf("DIRECTORY NAME TOO LONG.\n");
-        return -ENAMETOOLONG;
-    }
-    printf("DIRECTORY NAME NOT TOO LONG.\n");
-    
-    printf("CHECKING IF PATH IS JUST ROOT.\n");
-    // Check if just root is given
-    if(strcmp(path, "/") == 0)
-    {
-        printf("PATH IS ROOT.\n");
-        return -EEXIST;
-    }
-    // If there is more than 1 variable filled by sscanf, user trying to make
-    // a new directory outside of root which goes against project speficications
-    //if(numVarsFilled > 1)
-    //{
-    //    return -EPERM;
-   // }
-    // Make sure we weren't given just / as a directory
-    //if(filename[0] == '/')
-    //{
-     //   return -EPERM;
-    //}
-    
-    // Directory name is valid. See if it exists already
-    int dirIndex = getDirIndex(directory);
-    printf("Location of directory: %d\n", dirIndex);
-    
-    if(dirIndex != -1)
-    {
-        printf("DIRECTORY ALREADY EXISTS.\n");
-        printf("ERROR FINDING DIRECTORY.\n");
-        return -EEXIST;
-    }
-   
-    // If we are here this means that our directory does not exist already,
-    // so it must be created. But, we must check to see that the number of directories
-    // in root is not over the maximum number of directories allowed by our disk.
-    printf("DIRECTORY DOES NOT EXIST. ATTEMPTING TO CREATE.\n");
-    
-    // Reached capacity for number of directories
-    if(checkNumDirectories() == -1)
-    {
-        printf("CANNOT CREATE ANY MORE DIRECTORIES. CAPACITY REACHED.\n");
-        return -1;
-    }
-    
-    // If we are here, it means that our directory does not exist AND
-    // we have space in root to create a new directory.
-    int res = createNewDir(directory);
-    
-    if(res)
-    {
-        printf("CREATED NEW DIRECTORY.\n");
-        return 0;
-    }
-    else
-    {
-        printf("COULD NOT CREATE NEW DIRECTORY.\n");
-        return -1;
-    }
-    
-    
-     
-     /*
-    if(directory[0] != 0)
-    {
-        // First let's check to make sure that the directory doesn't already exist
-        // in our file system.
-        // Make sure to seek to beginning of disk to start search!
-        //fseek(disk, 0, SEEK_SET);
-        cs1550_root_directory root;
-        //fread(&root, BLOCK_SIZE, 1, disk);
-        
-        int numDirectories = root.nDirectories;
-        
-        // Scan blocks in .disk to see if entry exists
-        int i;
-        for(i = 0; i < numDirectories; i++)
-        {
-            if( strcmp(directory, root.directories[i].dname) == 0 )
-            {
-                return -EEXIST;
-            }
-        }
-        
-        // If we are here, then directory does not exist, so we must
-        // update the root block with new entry information
- 
-        long start;
-        
-        if(numDirectories == 0)
-        {
-            start = BLOCK_SIZE;
-        }
-        else
-        {
-            start = BLOCK_SIZE * numDirectories;
-        }
-            
-        strcpy(root.directories[numDirectories].dname, directory);
-        root.directories[numDirectories].nStartBlock = start;
-        root.nDirectories += 1;
-        
-        // Update root block
-        //fseek(disk, 0, SEEK_SET);
-        //fwrite(&root, BLOCK_SIZE, 1, disk);
-        
-        // We must write the new entry at the appropirate block in disk
-        // Create entry to store in disk
-        cs1550_directory_entry entry;
-        
-        // Move disk pointer to the start location of the directory block
-        //fseek(disk, start, SEEK_SET);
-        //fwrite(&entry, BLOCK_SIZE, 1, disk);
-    }
-    
-    // DON'T FORGET TO FREE ALL CALLOC'D MEMORY
-    // AND CLOSE ALL FILES!
-    
-    fclose(disk);
-    free(filename);
-    free(extension);
-    free(directory);
-     */
+
+	return 0;
 }
-
-
-
-
-
-
 
 /* 
  * Removes a directory.
@@ -902,10 +256,6 @@ static int cs1550_mknod(const char *path, mode_t mode, dev_t dev)
 {
 	(void) mode;
 	(void) dev;
-    
-    
-    // Remove later:
-    (void) path;
 	return 0;
 }
 
