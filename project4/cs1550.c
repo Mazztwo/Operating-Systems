@@ -162,19 +162,23 @@ static size_t get_file_size(int dirIndex, char *file)
     
     // Seek to block and get directory
     cs1550_directory_entry parent;
-    fseek(disk, dirStart, SEEK_SET);
+    fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
     fread(&parent, BLOCK_SIZE, 1, disk);
     
     printf("get_file_size-GOT PARENT DIR!\n");
     
     // See if file exists
-    int i;
-    for (i = 0; i < parent.nFiles; i++)
+    if(parent.nFiles > 0)
     {
-        if (strcmp(parent.files[i].fname, file) == 0)
+        printf("get_file_size-NUM FILES > 0 FOR PARENT\n");
+        int i;
+        for (i = 0; i < parent.nFiles; i++)
         {
-            fileSize = parent.files[i].fsize;
-            break;
+            if (strcmp(parent.files[i].fname, file) == 0)
+            {
+                fileSize = parent.files[i].fsize;
+                break;
+            }
         }
     }
     
@@ -243,7 +247,7 @@ static int get_free_block(FILE *disk)
     // Find next free block
     int leave = 0;
     int i;
-    for(i = 1; i < 3*BLOCK_SIZE; i++)
+    for(i = 0; i < 3*BLOCK_SIZE; i++)
     {
         unsigned char flip = 1;
         int j;
@@ -254,7 +258,7 @@ static int get_free_block(FILE *disk)
                 // Mark the block as taken
                 map[i] |= flip;
                 leave = 1;
-                blockPos = (i*8) + j;
+                blockPos = 1 + (i*8) + j;
                 break;
             }
             // Shift bit
@@ -307,8 +311,9 @@ static int create_new_dir(char *directory)
     if(freeBlock > 0 )
     {
         printf("create_new_dir-FREE BLOCK FOUND!\n");
+        printf("FREE BLOCK: %d\n", freeBlock);
         
-        printf("create_new_dir-UPDATING ROOT WITH NEW INFO!");
+        printf("create_new_dir-UPDATING ROOT WITH NEW INFO!\n");
         // Create new directory on root
         strcpy(root.directories[root.nDirectories].dname, directory);
         root.directories[root.nDirectories].nStartBlock = freeBlock;
@@ -320,10 +325,10 @@ static int create_new_dir(char *directory)
         // Write updated root and new entry to disk
         fseek(disk, 0, SEEK_SET);
         fwrite(&root, sizeof(cs1550_root_directory), 1, disk);
-        printf("create_new_dir-WROTE UPDATED ROOT TO DISK!");
-        fseek(disk, freeBlock, SEEK_SET);
+        printf("create_new_dir-WROTE UPDATED ROOT TO DISK!\n");
+        fseek(disk, BLOCK_SIZE*freeBlock, SEEK_SET);
         fwrite(&entry, sizeof(cs1550_directory_entry),1,disk);
-        printf("create_new_dir-WROTE NEW DIR TO DISK!");
+        printf("create_new_dir-WROTE NEW DIR TO DISK!\n");
 
         created = 1;
         
@@ -388,7 +393,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
         printf("DIR_INDEX: %d\n", dirIndex);
         
         // Dir exists
-        if(dirIndex > 0)
+        if(dirIndex >= 0)
         {
             printf("DIRECTORY EXISTS!\n");
             // Check if file exists
