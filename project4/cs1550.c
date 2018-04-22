@@ -151,7 +151,7 @@ static size_t get_file_size(int dirIndex, char *file)
     if(r <=0)
     {
         printf("get_file_size-ERROR: Could not read root.\n");
-        fclose(file);
+        fclose(disk);
         return -1;
     }
     
@@ -180,6 +180,133 @@ static size_t get_file_size(int dirIndex, char *file)
     
     fclose(disk);
     return fileSize;
+}
+
+
+// Checks if number of directories is max.
+// Returns 0 if capacity reached
+// Returns 1 if capacity not reached
+static int check_dir_capacity()
+{
+    int cap = 0;
+    
+    FILE *disk = fopen(".disk","rb");
+    
+    if(disk == NULL)
+    {
+        printf("check_dir_capacity-ERROR: .disk could not be opened!\n");
+        return 0;
+    }
+    
+    printf("check_dir_capacity-OPENED DISK!\n");
+    
+    cs1550_root_directory root;
+    int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+    
+    printf("check_dir_capacity-GOT ROOT!\n");
+    fclose(disk);
+    
+    if(r <=0)
+    {
+        printf("check_dir_capacity-ERROR: Could not read root.\n");
+        return 0;
+    }
+    
+    if(root.nDirectories >= MAX_DIRS_IN_ROOT)
+    {
+        cap = 0;
+    }
+    else
+    {
+        cap = 1;
+    }
+    
+    
+    return cap;
+}
+
+// Gets the next free block available on disk using the free space tracking at the end
+// Returns 0 if free block could not be found
+// Returns block number if free block is found
+static int get_free_block(FILE *disk)
+{
+    int blockPos = 0;
+    
+    // create bitmap
+    // seek to position
+    // read bitmap
+    // seek back to start of bit map
+    unsigned char map[3*BLOCK_SIZE];
+    fseek(disk, -3*BLOCK_SIZE, SEEK_END);
+    fread(map, 3*BLOCK_SIZE, 1, disk);
+    fseek(disk, -3*BLOCK_SIZE, SEEK_END);
+    
+    // Find next free block
+    int i;
+    //for(i = 0)
+    
+    
+    
+    
+    
+    return blockPos;
+}
+
+
+
+// Creates new dir at next available free block
+// Returns 0 if dir could not be created
+// Returns 1 if dir was created successfully
+static int create_new_dir(char *directory)
+{
+    int created = 0;
+    
+    FILE *disk = fopen(".disk","r+b");
+    
+    if(disk == NULL)
+    {
+        printf("create_new_dir-ERROR: .disk could not be opened!\n");
+        return 0;
+    }
+    
+    printf("create_new_dir-OPENED DISK!\n");
+    
+    cs1550_root_directory root;
+    int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+    
+    printf("create_new_dir-GOT ROOT!\n");
+    
+    if(r <=0)
+    {
+        printf("create_new_dir-ERROR: Could not read root.\n");
+        return 0;
+    }
+    
+    
+    int freeBlock = get_free_block(disk);
+    
+    // Seek back to beginning of file
+    // !!!!!!
+    
+    if(freeBlock > 0 )
+    {
+        printf("create_new_dir-FREE BLOCK FOUND!\n");
+        
+        
+        created = 1;
+        
+    }
+    else
+    {
+        printf("create_new_dir-ERROR: COULD NOT FIND FREE BLOCK!\n");
+        created = 0;
+    }
+    
+    
+    
+    
+    fclose(disk);
+    return created;
 }
 
 
@@ -266,7 +393,6 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     
 	return res;
 }
-
 
 
 
@@ -361,14 +487,29 @@ static int cs1550_mkdir(const char *path, mode_t mode)
     // Dir does not exist. Make it
     else
     {
+        int c = check_dir_capacity();
         
-        
-        
-        
-        
-        
-        
-        
+        if(c == 1)
+        {
+            printf("CREATING EMPTY DIR!\n");
+            c = create_new_dir(directory);
+            
+            if(c == 0)
+            {
+                printf("COULD NOT CREATE DIR!\n");
+                res = -1;
+            }
+            else
+            {
+                printf("NEW DIR CREATED!\n");
+                res = 0;
+            }
+        }
+        else
+        {
+            printf("REACHED DIR CAPACITY!\n");
+            res = -1;
+        }
     }
     
 	return res;
