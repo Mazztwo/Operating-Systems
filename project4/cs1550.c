@@ -872,15 +872,136 @@ static int cs1550_read(const char *path, char *buf, size_t size, off_t offset,
 	(void) buf;
 	(void) offset;
 	(void) fi;
-	(void) path;
 
-	//check to make sure path exists
-	//check that size is > 0
-	//check that offset is <= to the file size
-	//read in data
-	//set size and return, or error
-
-	size = 0;
+    char directory[MAX_FILENAME+1];
+    char filename[MAX_FILENAME+1];
+    char extension[MAX_EXTENSION+1];
+    
+    memset(directory,  0,MAX_FILENAME + 1);
+    memset(filename, 0,MAX_FILENAME  + 1);
+    memset(extension,0,MAX_EXTENSION + 1);
+    
+    printf("READ!\n");
+    
+    // Get info
+    printf("SCANNING PATH!\n");
+    sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
+    printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+    
+    // check to make sure path exists
+    if(strcmp(directory, "\0") == 0 || strcmp(filename, "\0") == 0 || strcmp(extension, "\0") == 0)
+    {
+        printf("read-PATH GIVEN DOES NOT EXIST!\n");
+        return -EPERM;
+    }
+    // check that size is > 0
+    else if(size <= 0)
+    {
+        printf("read-SIZE LESS THAN OR EQUAL TO 0!\n");
+        return 0;
+    }
+    
+    // check if path is a directory
+    if(strcmp(directory, "\0") != 0 && strcmp(filename, "\0") == 0)
+    {
+        printf("read-PATH GIVEN IS A DIRECTORY!\n");
+        return -EISDIR;
+    }
+    
+    // Get parent index
+    // Get root
+    // Find file
+    // Check file size
+    int dirIndex = get_directory(directory);
+    
+    // Dir exists
+    if(dirIndex >= 0)
+    {
+        // See if file exists
+        int fileSize = get_file_size(dirIndex, filename, extension);
+        printf("read-FILESIZE: %d\n",fileSize);
+        
+        // File does not exist
+        if(fileSize < 0)
+        {
+            printf("read-FILE DOES NOT EXIST!\n");
+            return -EPERM;
+        }
+        // File exists
+        else
+        {
+            // Check that offset is <= to the file size
+            if(offset > fileSize)
+            {
+                return -EFBIG;
+            }
+            // write data
+            else
+            {
+                // Get start block of file
+                // Get root
+                FILE *disk = fopen(".disk","r+b");
+                
+                if(disk == NULL)
+                {
+                    printf("read-ERROR: .disk could not be opened!\n");
+                    return -1;
+                }
+                
+                printf("read-OPENED DISK!\n");
+                
+                cs1550_root_directory root;
+                int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+                
+                
+                if(r <=0)
+                {
+                    printf("read-ERROR: Could not read root.\n");
+                    return -1;
+                }
+                printf("read-GOT ROOT!\n");
+                
+                // Get start block of parent
+                long dirStart = root.directories[dirIndex].nStartBlock;
+                printf("read-PARENT START BLOCK: %ld\n",dirStart);
+                
+                // Seek to block and get parent
+                cs1550_directory_entry parent;
+                fseek(disk, BLOCK_SIZE*dirStart, SEEK_SET);
+                fread(&parent, sizeof(cs1550_directory_entry), 1, disk);
+                
+                printf("read-GOT PARENT DIR!\n");
+                
+                
+                int fileStart = 0;
+                // Find the file
+                int i;
+                for (i = 0; i < parent.nFiles; i++)
+                {
+                    if(strcmp(parent.files[i].fname, filename) == 0 && strcmp(parent.files[i].fext, extension) == 0)
+                    {
+                        fileStart = parent.files[i].nStartBlock;
+                        break;
+                    }
+                }
+                
+                // Go to start of file
+                fseek(disk, 0, SEEK_SET);
+                
+                
+                
+                
+                
+            }
+            
+        }
+    }
+    // Dir does not exist
+    else
+    {
+        printf("write-DIR DOES NOT EXIST!\n");
+        size = 0;
+    }
 
 	return size;
 }
@@ -989,16 +1110,21 @@ static int cs1550_write(const char *path, const char *buf, size_t size,
                 
                 printf("write-GOT PARENT DIR!\n");
                 
-                // Go to start of file
-                fseek(disk, 0, SEEK_SET);
                 
+                int fileStart = 0;
                 // Find the file
                 int i;
-                for(i = 0; i < parent.nFiles; i++)
+                for (i = 0; i < parent.nFiles; i++)
                 {
-                    
+                    if(strcmp(parent.files[i].fname, filename) == 0 && strcmp(parent.files[i].fext, extension) == 0)
+                    {
+                        fileStart = parent.files[i].nStartBlock;
+                        break;
+                    }
                 }
                 
+                // Go to start of file
+                fseek(disk, 0, SEEK_SET);
                 
                 
                 
