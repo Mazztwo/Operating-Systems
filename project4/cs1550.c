@@ -91,25 +91,29 @@ static int get_directory(char *directory)
     
     if(disk == NULL)
     {
-        printf("ERROR: .disk could not be opened!\n");
+        printf("get_directory-ERROR: .disk could not be opened!\n");
         return -1;
     }
     
-    cs1550_root_directory *root;
-    int r = fread(root, sizeof(cs1550_root_directory), 1, disk);
+    printf("get_directory-OPENED DISK!\n");
+    
+    cs1550_root_directory root;
+    int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
+    
+    printf("get_directory-GOT ROOT!\n");
     fclose(disk);
     
     if(r <=0)
     {
-        printf("ERROR: Could not read root.\n");
+        printf("get_directory-ERROR: Could not read root.\n");
         return -1;
     }
     
     // See if dir exists
     int i;
-    for (i = 0; i < (root->nDirectories); i++)
+    for (i = 0; i < root.nDirectories; i++)
     {
-        if (strcmp((root->directories)[i].dname, directory) == 0)
+        if (strcmp(root.directories[i].dname, directory) == 0)
         {
             dirIndex = i;
             break;
@@ -135,36 +139,41 @@ static size_t get_file_size(int dirIndex, char *file)
     
     if(disk == NULL)
     {
-        printf("ERROR: .disk could not be opened!\n");
+        printf("get_file_size-ERROR: .disk could not be opened!\n");
         return -1;
     }
     
-    cs1550_root_directory *root;
-    int r = fread(root, sizeof(cs1550_root_directory), 1, disk);
+    printf("get_file_size-OPENED DISK!\n");
+    
+    cs1550_root_directory root;
+    int r = fread(&root, sizeof(cs1550_root_directory), 1, disk);
     
     if(r <=0)
     {
-        printf("ERROR: Could not read root.\n");
+        printf("get_file_size-ERROR: Could not read root.\n");
         fclose(file);
         return -1;
     }
     
+    printf("get_file_size-GOT ROOT!\n");
+    
     // Get start block of parent
-    long dirStart = root->directories[dirIndex].nStartBlock;
+    long dirStart = root.directories[dirIndex].nStartBlock;
     
     // Seek to block and get directory
-    cs1550_directory_entry *parent;
-    fseek(file, dirStart, SEEK_SET);
-    fread(parent, BLOCK_SIZE, 1, file);
+    cs1550_directory_entry parent;
+    fseek(disk, dirStart, SEEK_SET);
+    fread(&parent, BLOCK_SIZE, 1, disk);
     
+    printf("get_file_size-GOT PARENT DIR!\n");
     
     // See if file exists
     int i;
-    for (i = 0; i < (parent->nFiles); i++)
+    for (i = 0; i < parent.nFiles; i++)
     {
-        if (strcmp((parent->files)[i].fname, file) == 0)
+        if (strcmp(parent.files[i].fname, file) == 0)
         {
-            fileSize = (parent->files)[i].fsize;
+            fileSize = parent.files[i].fsize;
             break;
         }
     }
@@ -199,32 +208,40 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
     memset(extension,0,MAX_EXTENSION + 1);
 	memset(stbuf, 0, sizeof(struct stat));
    
+    printf("GET_ATTR!\n");
+    
 	//is path the root dir?
 	if (strcmp(path, "/") == 0)
     {
+        printf("PATH IS ROOT!\n");
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 	}
     else
     {
         // Get info
+        printf("SCANNING PATH!\n");
+        
         sscanf(path, "/%[^/]/%[^.].%s", directory, filename, extension);
         
         // Check if dir exists
         int dirIndex = get_directory(directory);
         
-        printf("dir: %s, file: %s, ext: %s\n", directory, filename, extension);
-        printf("dirIndex: %d\n", dirIndex);
+        printf("PATH: dir: %s, file: %s, ext: %s\n", directory, filename, extension);
+        printf("DIR_INDEX: %d\n", dirIndex);
         
         // Dir exists
         if(dirIndex > 0)
         {
+            printf("DIRECTORY EXISTS!\n");
             // Check if file exists
             size_t fileSize = get_file_size(dirIndex, filename);
+            printf("FILE_SIZE: %zu\n", fileSize);
             
             // File exists
             if(fileSize > 0)
             {
+                printf("FILE EXISTS!\n");
                  //regular file, probably want to be read and write
                  stbuf->st_mode = S_IFREG | 0666;
                  stbuf->st_nlink = 1; //file links
@@ -234,6 +251,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             // File does not exist
             else
             {
+                printf("FILE DOES NOT EXIST!\n");
                 //Might want to return a structure with these fields
                 stbuf->st_mode = S_IFDIR | 0755;
                 stbuf->st_nlink = 2;
@@ -247,6 +265,7 @@ static int cs1550_getattr(const char *path, struct stat *stbuf)
             res = -ENOENT;
         }
 	}
+    
 	return res;
 }
 
@@ -288,6 +307,17 @@ static int cs1550_mkdir(const char *path, mode_t mode)
 {
 	(void) path;
 	(void) mode;
+    
+    
+    printf("MAKING DIRECTORY!\n");
+    
+    
+    
+    
+    
+    
+    
+    
 
 	return 0;
 }
